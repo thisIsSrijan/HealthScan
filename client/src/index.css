@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #10b981;
+  --secondary-color: #0ea5e9;
+  --accent-color: #e3f2fd;
+  --background-color: #f0f9ff;
+  --text-color: #2c3e50;
+}
+
+.dark {
+  --primary-color: #059669;
+  --secondary-color: #0284c7;
+  --accent-color: #1e293b;
+  --background-color: #111827;
+  --text-color: #e2e8f0;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  margin: 0;
+  padding: 0;
+}
+
+.card {
+  @apply bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300;
+}
+
+.btn-primary {
+  @apply bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-lg shadow-md transition-all ease-in-out duration-300 dark:bg-emerald-600 dark:hover:bg-emerald-700;
+}
+
+.btn-secondary {
+  @apply bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg shadow-md transition-all ease-in-out duration-300 dark:bg-blue-600 dark:hover:bg-blue-700;
+}
+
+.btn-outline {
+  @apply border border-emerald-500 text-emerald-500 bg-transparent hover:bg-emerald-50 py-2 px-4 rounded-lg transition-all ease-in-out duration-300 dark:border-emerald-400 dark:text-emerald-400 dark:hover:bg-emerald-900;
+}
+
+.input-field {
+  @apply bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 sm:text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 transition-colors;
+}
+
+.gradient-bg {
+  @apply bg-gradient-to-br from-emerald-400 to-teal-500 dark:from-emerald-600 dark:to-teal-700;
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-400 dark:to-teal-400;
+}
+
+/* Health specific styling */
+.health-icon {
+  @apply text-emerald-500 dark:text-emerald-400;
+}
+
+.pill-button {
+  @apply px-4 py-1 rounded-full text-sm font-medium;
+}
+
+.health-container {
+  @apply max-w-7xl mx-auto p-4 sm:p-6 lg:p-8;
+}
+
+/* Chart styling */
+.chart-container {
+  @apply h-64 w-full;
+}
+
+.chart-bar {
+  @apply rounded-t-md transition-all duration-300 hover:opacity-80;
+}
+
+.chart-bar-weight {
+  @apply bg-emerald-400 dark:bg-emerald-500;
+}
+
+.chart-bar-bmi {
+  @apply bg-teal-400 dark:bg-teal-500;
+}
+
+/* Sidebar styling */
+.sidebar {
+  @apply w-64 h-full bg-white dark:bg-gray-800 shadow-md flex flex-col transition-all duration-300 ease-in-out;
+}
+
+.sidebar-collapsed {
+  @apply w-16;
+}
+
+.sidebar-link {
+  @apply flex items-center px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-900 hover:text-emerald-700 dark:hover:text-emerald-400 rounded-lg transition-colors;
+}
+
+.sidebar-link-active {
+  @apply bg-emerald-50 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-400;
+}
+
+/* Form styling */
+.form-group {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+}
+
+/* Toggle switch for dark mode */
+.toggle-switch {
+  @apply relative inline-block w-12 h-6;
+}
+
+.toggle-switch input {
+  @apply opacity-0 w-0 h-0;
+}
+
+.toggle-slider {
+  @apply absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 dark:bg-gray-600 transition-colors duration-300 rounded-full;
+}
+
+.toggle-slider:before {
+  @apply absolute content-[''] h-4 w-4 left-1 bottom-1 bg-white transition-transform duration-300 rounded-full;
+}
+
+input:checked + .toggle-slider {
+  @apply bg-emerald-500;
+}
+
+input:checked + .toggle-slider:before {
+  @apply transform translate-x-6;
+}
+
