@@ -198,8 +198,8 @@ const Dashboard = () => {
     let points = ""
 
     bmiHistory.forEach((data, index) => {
-      const x = (index / (bmiHistory.length - 1)) * 100 + "%"
-      const y = (1 - (data.value - 15) / 20) * 100 + "%"
+      const x = (index / (bmiHistory.length - 1)) * 100
+      const y = (1 - (data.value - 15) / 20) * 100
       points += `${x},${y} `
     })
 

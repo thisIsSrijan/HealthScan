@@ -3,11 +3,26 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, MessageSquare, Upload, BarChart2, LogOut, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useEffect } from 'react';
 
 const Sidebar = ({ logout }) => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { darkMode, toggleDarkMode } = useTheme();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth < 768) {
+        setCollapsed(true);
+      }
+    };
+
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
@@ -20,15 +35,33 @@ const Sidebar = ({ logout }) => {
   ];
 
   return (
+    <>
     <motion.div 
       className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`}
-      animate={{ width: collapsed ? 64 : 256 }}
-      transition={{ duration: 0.3 }}
+      // animate={{ width: collapsed ? 64 : 256 }}
+      animate={{ 
+        width: collapsed ? (isMobile ? 0 : 64) : 256,
+        opacity: collapsed && isMobile ? 0 : 1
+      }}
+
+      transition={{ duration: 0.1 }}
     >
       <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
         {!collapsed && (
-          <h2 className="text-xl font-bold text-gradient">HealthScan</h2>
+          // <h2 className="text-xl font-bold text-gradient">HealthScan</h2>
+          <motion.h2 
+                className="text-xl font-bold text-gradient"
+                initial={{ width: 0 }}
+                animate={{ width: 200 }}
+                exit={{ width: 0 }}
+                // animate={{ opacity: 1, x: 0 }}
+                // exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.8 }}
+              >
+                HealthScan
+              </motion.h2>
         )}
+
         <button 
           onClick={toggleSidebar} 
           className="p-2 rounded-lg text-gray-500 hover:text-emerald-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -76,7 +109,10 @@ const Sidebar = ({ logout }) => {
         </button>
       </div>
     </motion.div>
+    
+    </>
   );
 };
 
 export default Sidebar;
+

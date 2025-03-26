@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard"
 import Chatbot from "./pages/Chatbot"
 import IngredientScanner from "./pages/IngredientScanner"
 import { ThemeProvider } from "./context/ThemeContext"
+import Navbar from "./components/Navbar"
 import "./index.css"
 
 function App() {
