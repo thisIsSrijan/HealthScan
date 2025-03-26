@@ -17,6 +17,7 @@ const Sidebar = ({ logout }) => {
     { path: '/dashboard', name: 'Dashboard', icon: <BarChart2 size={20} /> },
     { path: '/chatbot', name: 'Health Assistant', icon: <MessageSquare size={20} /> },
     { path: '/scan', name: 'Ingredient Scanner', icon: <Upload size={20} /> },
+    { path: '/temporary', name: 'Text Extraction Demo'},
   ];
 
   return (
@@ -31,7 +32,7 @@ const Sidebar = ({ logout }) => {
         )}
         <button 
           onClick={toggleSidebar} 
-          className="p-2 rounded-lg text-gray-500 hover:text-emerald-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="p-2 text-gray-500 transition-colors rounded-lg hover:text-emerald-500 hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
@@ -55,7 +56,7 @@ const Sidebar = ({ logout }) => {
       <div className="p-4 border-t dark:border-gray-700">
         <button 
           onClick={toggleDarkMode}
-          className="sidebar-link mb-2 justify-center"
+          className="justify-center mb-2 sidebar-link"
         >
           {collapsed ? (
             darkMode ? <Sun size={20} /> : <Moon size={20} />
@@ -69,7 +70,7 @@ const Sidebar = ({ logout }) => {
         
         <button 
           onClick={logout}
-          className="sidebar-link text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-700 dark:hover:text-red-300"
+          className="text-red-600 sidebar-link dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-700 dark:hover:text-red-300"
         >
           <LogOut size={20} className="mr-3" />
           {!collapsed && <span>Logout</span>}
