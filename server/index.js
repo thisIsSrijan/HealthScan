@@ -8,6 +8,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth");
 const uploadRoutes = require("./routes/upload");
 const chatbotRoutes = require("./routes/chatbot");
+const userRoutes = require("./routes/user");
 
 const app = express();
 
@@ -31,6 +32,7 @@ connectDB();
 app.use("/api/auth", authRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/user", userRoutes);
 
 // Server
 const PORT = process.env.PORT || 5000;
