@@ -4,15 +4,22 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 
-// Import Routes
+//route imports
 const authRoutes = require("./routes/auth");
 const uploadRoutes = require("./routes/upload");
 const chatbotRoutes = require("./routes/chatbot");
 
 const app = express();
 
+//CORS policy
+const corsOption = {
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+    optionSuccessStatus: 200,
+}
+
 // Middleware
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors(corsOption));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -27,4 +34,4 @@ app.use("/api/chatbot", chatbotRoutes);
 
 // Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

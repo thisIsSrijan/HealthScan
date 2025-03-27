@@ -1,16 +1,9 @@
 const express = require("express");
-const axios = require("axios");
+const { chatWithBot } = require("../controllers/chatbotController");
+const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.post("/", async (req, res) => {
-  try {
-    const { message } = req.body;
-    const response = await axios.post("http://localhost:5001/chatbot", { message });
-    res.json(response.data);
-  } catch (error) {
-    res.status(500).json({ error: "Chatbot error" });
-  }
-});
+router.post("/", authMiddleware, chatWithBot);
 
 module.exports = router;
