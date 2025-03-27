@@ -120,7 +120,7 @@ const Sidebar = ({ logout }) => {
       <div className="p-4 border-t dark:border-gray-700">
         <button
           onClick={toggleDarkMode}
-          className="sidebar-link mb-2 justify-center"
+          className="flex items-center px-2 py-3 rounded-3xl text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-900 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors mb-2 justify-center"
         >
           {collapsed ? (
             darkMode ? (
@@ -131,9 +131,9 @@ const Sidebar = ({ logout }) => {
           ) : (
             <>
               {darkMode ? (
-                <Sun size={20} className="mr-3" />
+                <Sun size={20} className="" />
               ) : (
-                <Moon size={20} className="mr-3" />
+                <Moon size={20} className="" />
               )}
               <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
             </>
@@ -142,9 +142,9 @@ const Sidebar = ({ logout }) => {
 
         <button
           onClick={logout}
-          className="sidebar-link text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-700 dark:hover:text-red-300"
+          className="flex items-center px-2 py-3 rounded-3xl transition-colors text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 hover:text-red-700 dark:hover:text-red-300"
         >
-          <LogOut size={20} className="mr-3" />
+          <LogOut size={20} className="" />
           {!collapsed && <span>Logout</span>}
         </button>
       </div>

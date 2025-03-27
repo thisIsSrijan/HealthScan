@@ -135,3 +135,9 @@ input:checked + .toggle-slider:before {
   @apply transform translate-x-6;
 }
 
+/* Mobile padding for content */
+@media (max-width: 768px) {
+  .health-container {
+    @apply pt-16;
+  }
+}
