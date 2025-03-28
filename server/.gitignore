@@ -3,3 +3,5 @@
 
 # Ignore node modules
 node_modules/
+
+ingredient-scanner-ocr-service.json
