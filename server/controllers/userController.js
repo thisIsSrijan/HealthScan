@@ -78,3 +78,103 @@ exports.getUserDetails = async (req, res) => {
     res.status(500).json({ error: "Server error fetching user data" });
   }
 };
+
+// Helper function to update user fields
+// const updateUserField = async (req, res, field) => {
+//   try {
+//     const  id  = req.user.userId; // Assuming user ID is extracted from authentication middleware
+//     const { value } = req.body;
+//     // console.log("req.user : ", req.user);
+//     // console.log("req.body : ", value);
+
+
+//     if (!value) {
+//       return res.status(400).json({ message: "Value is required" });
+//     }
+//         // Check if value already exists in the specified field
+//         if (user[field] && user[field].includes(value)) {
+//           return res.status(409).json({ message: `${value} already exists in ${field}` });
+//         }
+
+//     const update = { $addToSet: { [field]: value } }; // Prevents duplicate entries
+//     const user = await User.findByIdAndUpdate(id, update, { new: true });
+//     console.log("user : ", user);
+    
+
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     res.status(200).json({ message: `${field} added successfully`, user });
+//   } catch (error) {
+//     res.status(500).json({ message: "Internal server error", error });
+//   }
+// };
+
+const updateUserField = async (req, res, field) => {
+  try {
+    const id = req.user.userId; // Extract user ID from authentication middleware
+    const { value } = req.body;
+
+    if (!value) {
+      return res.status(400).json({ message: "Value is required" });
+    }
+
+    // Fetch user data to check if value already exists
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if value already exists in the specified field
+    if (user[field] && user[field].includes(value)) {
+      return res.status(409).json({ message: `${value} already exists in ${field}` });
+    }
+
+    // Add the new value using $addToSet (to avoid duplicates)
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { $addToSet: { [field]: value } },
+      { new: true }
+    );
+
+    res.status(200).json({ message: `${field} added successfully`, user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+
+// Helper function to remove user fields
+const removeUserField = async (req, res, field) => {
+  try {
+    const id  = req.user.userId;
+    const { value } = req.body;
+    // console.log(value);
+    if (!value) {
+      return res.status(400).json({ message: "Value is required" });
+    }
+
+    const update = { $pull: { [field]: value } }; // Removes the specific value
+    const user = await User.findByIdAndUpdate(id, update, { new: true });
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({ message: `${field} removed successfully`, user });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+// Add & Remove Allergies
+exports.addAllergy = (req, res) => updateUserField(req, res, "allergies");
+exports.removeAllergy = (req, res) => removeUserField(req, res, "allergies");
+
+// Add & Remove Medical Conditions
+exports.addMedicalCondition = (req, res) =>
+  updateUserField(req, res, "medicalConditions");
+exports.removeMedicalCondition = (req, res) =>
+  removeUserField(req, res, "medicalConditions");
+
+// Add & Remove Medications
+exports.addMedication = (req, res) => updateUserField(req, res, "medications");
+exports.removeMedication = (req, res) =>
+  removeUserField(req, res, "medications");

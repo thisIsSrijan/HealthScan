@@ -831,7 +831,7 @@ const Dashboard = () => {
     weight: [],
     bmi: 0,
     allergies: [],
-    conditions: [],
+    medicalConditions: [],
     medications: [],
   });
   // const [weightHistory, setWeightHistory] = useState([]);
@@ -844,7 +844,7 @@ const Dashboard = () => {
   const [editMode, setEditMode] = useState({
     profile: false,
     allergies: false,
-    conditions: false,
+    medicalConditions: false,
     medications: false,
   });
   const [editData, setEditData] = useState({
@@ -873,6 +873,10 @@ const Dashboard = () => {
         },
         withCredentials: true,
       });
+      // if(response.status == 409) {
+      //   console.alert("alergy arleady exists");
+      //   return;
+      // }
       setUserData(response.data);
       console.log("fetchUserProfile:",response.data);
       
@@ -1247,10 +1251,15 @@ const Dashboard = () => {
     if (editData.newAllergy.trim() === "") return;
 
     try {
-      const response = await axios.post("/api/medical-info/allergies", {
-        allergy: editData.newAllergy.trim(),
+      const response = await axios.patch(`${backendUrl}/api/user/allergies/add`, 
+        {value: editData.newAllergy.trim()}
+      ,{
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
       });
-
       setUserData((prev) => ({
         ...prev,
         allergies: [...prev.allergies, editData.newAllergy.trim()],
@@ -1260,7 +1269,13 @@ const Dashboard = () => {
         ...prev,
         newAllergy: "",
       }));
+
+      
     } catch (error) {
+      if(error.response && error.response.status === 409) {
+        alert("Allergy already exists");
+        return;
+      }
       console.error("Error adding allergy:", error);
       alert("Failed to add allergy. Please try again.");
     }
@@ -1268,11 +1283,19 @@ const Dashboard = () => {
 
   const removeAllergy = async (index) => {
     const allergyToRemove = userData.allergies[index];
+    // console.log("Removing allergy:", allergyToRemove);
 
     try {
-      await axios.delete(`/api/medical-info/allergies`, {
-        data: { allergy: allergyToRemove },
-      });
+      await axios.patch(`${backendUrl}/api/user/allergies/remove`, {
+        value:allergyToRemove
+      },{
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      }
+    );
 
       setUserData((prev) => ({
         ...prev,
@@ -1286,15 +1309,24 @@ const Dashboard = () => {
 
   const addCondition = async () => {
     if (editData.newCondition.trim() === "") return;
-
+    console.log("Adding condition:", editData.newCondition.trim());
+    
     try {
-      const response = await axios.post("/api/medical-info/conditions", {
-        condition: editData.newCondition.trim(),
-      });
+      const response = await axios.patch(`${backendUrl}/api/user/conditions/add`, {
+        value: editData.newCondition.trim(),
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      }
+    );
 
       setUserData((prev) => ({
         ...prev,
-        conditions: [...prev.conditions, editData.newCondition.trim()],
+        medicalConditions: [...prev.medicalConditions, editData.newCondition.trim()],
       }));
 
       setEditData((prev) => ({
@@ -1302,22 +1334,32 @@ const Dashboard = () => {
         newCondition: "",
       }));
     } catch (error) {
+      if(error.response && error.response.status === 409) {
+        alert("Medical condition already exists");
+        return;
+      }
       console.error("Error adding condition:", error);
       alert("Failed to add condition. Please try again.");
     }
   };
 
+
   const removeCondition = async (index) => {
-    const conditionToRemove = userData.conditions[index];
+    const conditionToRemove = userData.medicalConditions[index];
 
     try {
-      await axios.delete(`/api/medical-info/conditions`, {
-        data: { condition: conditionToRemove },
+      await axios.patch(`${backendUrl}/api/user/conditions/remove`, {
+        value: conditionToRemove },{
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
       });
 
       setUserData((prev) => ({
         ...prev,
-        conditions: prev.conditions.filter((_, i) => i !== index),
+        medicalConditions: prev.medicalConditions.filter((_, i) => i !== index),
       }));
     } catch (error) {
       console.error("Error removing condition:", error);
@@ -1329,9 +1371,16 @@ const Dashboard = () => {
     if (editData.newMedication.trim() === "") return;
 
     try {
-      const response = await axios.post("/api/medical-info/medications", {
-        medication: editData.newMedication.trim(),
-      });
+      const response = await axios.patch(`${backendUrl}/api/user/medications/add`, {
+        value: editData.newMedication.trim(),
+      },{
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      }
+    );
 
       setUserData((prev) => ({
         ...prev,
@@ -1343,6 +1392,10 @@ const Dashboard = () => {
         newMedication: "",
       }));
     } catch (error) {
+      if(error.response && error.response.status === 409) {
+        alert("Medication already exists");
+        return;
+      }
       console.error("Error adding medication:", error);
       alert("Failed to add medication. Please try again.");
     }
@@ -1352,8 +1405,13 @@ const Dashboard = () => {
     const medicationToRemove = userData.medications[index];
 
     try {
-      await axios.delete(`/api/medical-info/medications`, {
-        data: { medication: medicationToRemove },
+      await axios.patch(`${backendUrl}/api/user/medications/remove`, {
+        value: medicationToRemove },{
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
       });
 
       setUserData((prev) => ({
@@ -1742,9 +1800,9 @@ const Dashboard = () => {
                       </h3>
                       <button
                         className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                        onClick={() => toggleEditMode("conditions")}
+                        onClick={() => toggleEditMode("medicalConditions")}
                       >
-                        {editMode.conditions ? (
+                        {editMode.medicalConditions ? (
                           <X
                             size={16}
                             className="text-gray-500 dark:text-gray-400"
@@ -1758,10 +1816,10 @@ const Dashboard = () => {
                       </button>
                     </div>
                     <div className="p-4">
-                      {!editMode.conditions ? (
+                      {!editMode.medicalConditions ? (
                         <div className="flex flex-wrap gap-2">
-                          {userData?.conditions?.length > 0 ? (
-                            userData.conditions.map((condition, index) => (
+                          {userData?.medicalConditions?.length > 0 ? (
+                            userData.medicalConditions.map((condition, index) => (
                               <span
                                 key={index}
                                 className="pill-button bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300"
@@ -1778,7 +1836,7 @@ const Dashboard = () => {
                       ) : (
                         <div className="space-y-3">
                           <div className="flex flex-wrap gap-2">
-                            {userData.conditions.map((condition, index) => (
+                            {userData?.medicalConditions?.map((condition, index) => (
                               <div
                                 key={index}
                                 className="pill-button bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300 flex items-center"
