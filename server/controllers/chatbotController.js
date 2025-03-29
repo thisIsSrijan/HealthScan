@@ -1,11 +1,19 @@
 const axios = require("axios");
 
 exports.chatWithBot = async (req, res) => {
+  // try {
+  //   const { message } = req.body;
+  //   const response = await axios.post("http://localhost:5001/chatbot", { message }); //dummy for now,
+  //   res.json(response.data);
+  // } catch (error) {
+  //   res.status(500).json({ error: "Chatbot error" });
+  // }
+
   try {
-    const { message } = req.body;
-    const response = await axios.post("http://localhost:5001/chatbot", { message }); //dummy for now,
+    const response = await axios.post("http://localhost:5001/extract_keywords", req.body);
     res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: "Chatbot error" });
+      res.status(500).json({ error: "Failed to process request" });
   }
+
 };
