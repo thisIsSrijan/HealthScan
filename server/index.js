@@ -1,9 +1,9 @@
-require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 
+require("dotenv").config();
 //route imports
 const authRoutes = require("./routes/auth");
 const uploadRoutes = require("./routes/upload");
@@ -14,8 +14,8 @@ const app = express();
 
 //CORS policy
 const corsOption = {
-    origin: process.env.CLIENT_URL,
-    credentials: true,
+    origin:  'http://localhost:5173', // Replace '*' with your frontend URL for credentials
+    credentials: true, // Allow credentials (cookies)
     optionSuccessStatus: 200,
 }
 

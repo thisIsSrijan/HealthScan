@@ -48,6 +48,11 @@ const userSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
+  ABHA_Id : {
+    type: Number,
+    default: null,
+    required: false,
+  },
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);

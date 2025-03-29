@@ -24,11 +24,11 @@ function App() {
   const login = () => {
     // Dummy login function
     setIsAuthenticated(true)
-    localStorage.setItem("token", "sample-token-value")
+    // localStorage.setItem("token", "dummytoken")
   }
 
   const logout = () => {
-    setIsAuthenticated(false)
+    setIsAuthenticated(false);
     localStorage.removeItem("token")
   }
 
