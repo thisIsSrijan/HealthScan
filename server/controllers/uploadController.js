@@ -1,6 +1,8 @@
 const multer = require("multer");
 const vision = require("@google-cloud/vision");
 const User = require("../models/User");
+const { Groq } = require("groq-sdk");
+const e = require("express");
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB limit
 
@@ -11,55 +13,16 @@ const upload = multer({
   limits: { fileSize: MAX_SIZE },
 }).single("image");
 
-// const AI_MODEL_API = process.env.AI_MODEL_API;
 
 //Google Vision API client
 const client = new vision.ImageAnnotatorClient({
   keyFilename: "ingredient-scanner-ocr-service.json",
 });
 
-// Function to extract structured information from OCR text
-// const extractStructuredInfo = (text) => {
-//     const ingredientsPattern = /INGREDIENTS:([\s\S]*?)(?=NUTRITIONAL INFORMATION|CONTAINS)/i;
-//     const nutritionPattern = /NUTRITIONAL INFORMATION[\s\S]+?Per 100 g[\s\S]+?(Energy.*)/i;
-
-//     // Extract Ingredients
-//     const ingredientsMatch = text.match(ingredientsPattern);
-//     const ingredientsList = ingredientsMatch
-//         ? ingredientsMatch[1]
-//               .replace(/\n/g, " ") // Remove newlines inside ingredients
-//               .split(/,|\n/) // Split by comma or new line
-//               .map((item) => item.trim())
-//               .filter(Boolean)
-//         : [];
-
-//     // Extract Nutrition Information
-//     const nutritionMatch = text.match(nutritionPattern);
-//     const nutritionText = nutritionMatch ? nutritionMatch[1].replace(/\n/g, " ") : "";
-
-//     const nutritionData = {};
-//     const nutrientPattern = /([\w\s\-]+)\s*\(?(kcal|g|mg|%)?\)?\s*(\d+\.?\d*)?\s*(\d+\.?\d*)?\s*(\d+\.?\d*)?/gi;
-
-//     let match;
-//     while ((match = nutrientPattern.exec(nutritionText)) !== null) {
-//         const [_, nutrient, unit, per_100g, per_serving, rda] = match;
-
-//         // Store only if at least one value is found
-//         if (per_100g || per_serving || rda) {
-//             nutritionData[nutrient.trim()] = {
-//                 unit: unit || "",
-//                 per_100g: per_100g ? parseFloat(per_100g) : null,
-//                 per_serving: per_serving ? parseFloat(per_serving) : null,
-//                 rda_per_serving: rda ? parseFloat(rda) : null,
-//             };
-//         }
-//     }
-
-//     return {
-//         ingredients: ingredientsList,
-//         nutrition_info: nutritionData,
-//     };
-// };
+// Groq API client
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+})
 
 // Function to extract structured information from OCR text
 const extractStructuredInfo = (text) => {
@@ -179,6 +142,104 @@ const extractStructuredInfo = (text) => {
   };
 };
 
+// Function to analyze ingredients using Groq API
+// const analyzeWithGroq = async (ingredients, userMedicalHistory) => {
+//   const prompt = `
+//     You are a nutrition and health expert. 
+//     Given the following ingredients: ${ingredients}, 
+//     and a user with the following medical history: ${JSON.stringify(userMedicalHistory)},
+//     provide a detailed analysis of whether these ingredients are safe, any potential risks, 
+//     and recommendations for the user.
+//   `;
+
+//   const response = await groq.chat.completions.create({
+//     model: "llama3-8b-8192", // Choose an available Groq model
+//     messages: [{ role: "user", content: prompt }],
+//   });
+
+//   return response.choices[0].message.content;
+// };
+
+const analyzeWithGroq = async (extractedData, userMedicalHistory) => {
+  const prompt = `
+    You are an AI nutrition and health expert. Analyze the given extracted food data in relation to the user's medical history and return only a valid JSON object.  
+    DO NOT include explanations, introductions, or any text outside JSON format.  
+
+    **User Medical History:**  
+    ${JSON.stringify(userMedicalHistory)}
+
+    **Extracted Food Data:**  
+    ${JSON.stringify(extractedData)}
+
+    **Instructions:**  
+    - Evaluate ingredient safety based on health concerns and categorize each as **"safe"**, **"caution"**, **"danger"**, or **"info"**.
+    - If an ingredient is risky due to the user’s allergies, add a **"warning"** field.
+    - Provide **nutritional comments** based on \`nutrition_info\` (e.g., high sugar, sodium, fat).
+    - Determine an **overall rating**:
+      - \`"Safe"\` → If all ingredients are safe.
+      - \`"Caution"\` → If some ingredients raise concerns.
+      - \`"Danger"\` → If any ingredient is highly unsafe.
+    - Assign **overallColor** based on \`overallRating\`:
+      - \`"Safe"\` → \`"text-green-500 dark:text-green-400"\`
+      - \`"Caution"\` → \`"text-yellow-500 dark:text-yellow-400"\`
+      - \`"Danger"\` → \`"text-red-500 dark:text-red-400"\`
+
+    **Output Format (Strict JSON)**:  
+    \`\`\`json
+    {
+      "overallRating": "Caution",
+      "overallColor": "text-yellow-500 dark:text-yellow-400",
+      "userSpecificWarning": "Contains soy and wheat (you have a soy allergy)",
+      "ingredients": [
+        {
+          "name": "Refined Wheat Flour (Maida)",
+          "safety": "caution",
+          "description": "Highly processed flour with minimal fiber and nutrients, may impact blood sugar levels."
+        },
+        {
+          "name": "Soy",
+          "safety": "danger",
+          "description": "A common allergen that can cause severe reactions in sensitive individuals.",
+          "warning": "You have a soy allergy listed in your profile."
+        },
+        {
+          "name": "High Fructose Corn Syrup",
+          "safety": "caution",
+          "description": "A sweetener that may contribute to weight gain and metabolic issues when consumed in excess."
+        }
+      ],
+      "nutritionalComments": [
+        "High in total fat and saturated fat, which may not be ideal for heart health.",
+        "Contains added sugars above recommended daily intake.",
+        "High sodium content, which may impact blood pressure."
+      ]
+    }
+    \`\`\`
+
+    Return only the JSON object above. Do not include any additional text.  
+  `;
+
+  const response = await groq.chat.completions.create({
+    model: "llama3-8b-8192",
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  try {
+    // Extract the JSON part of the response
+    const jsonString = response.choices[0].message.content.trim();
+    return JSON.parse(jsonString);
+  } catch (error) {
+    console.error("Failed to parse Groq response:", error, "Response:", response.choices[0].message.content);
+    return { error: "Invalid AI response format" };
+  }
+};
+
+
+
+
+
+// Function to handle image upload and analysis
+
 exports.uploadImage = async (req, res) => {
   try {
     upload(req, res, async (err) => {
@@ -206,9 +267,13 @@ exports.uploadImage = async (req, res) => {
 
       const processedText = extractStructuredInfo(extractedText);
 
+      //------------Step 3: Send data to Groq AI Model for analysis-------------
+      const groqResponse = await analyzeWithGroq(extractedText, userMedicalHistory);
+
       res.status(200).json({
-        message: "Analysis completed.",
-        analysis: processedText, //to test send extracted text
+        // message: "Analysis completed.",
+        // extracted_data: processedText, //to test send extracted text
+        groqResponse, //to test send extracted text
       });
     });
   } catch (error) {

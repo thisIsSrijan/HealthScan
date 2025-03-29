@@ -5,3 +5,5 @@
 node_modules/
 
 ingredient-scanner-ocr-service.json
+
+package-lock.json
