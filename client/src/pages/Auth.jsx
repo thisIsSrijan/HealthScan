@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
+import { ToastContainer, toast } from 'react-toastify';
 
 const Auth = ({ login }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,41 +10,110 @@ const Auth = ({ login }) => {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    age: '',
+    gender: '',
+    height: '',
+    weight: '',
   });
   const { darkMode, toggleDarkMode } = useTheme();
-
+  
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
   };
-
-  const handleSubmit = (e) => {
+  
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    //will have login and register functions here after backend is complete
-    //dummy login call
-    login();
+    try {
+      const url = isLogin
+        ? `${import.meta.env.VITE_SERVER_URL}/api/auth/login`
+        : `${import.meta.env.VITE_SERVER_URL}/api/auth/signup`;
+
+      const body = isLogin
+        ? { email: formData.email, password: formData.password }
+        : {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            confirmPassword: formData.confirmPassword,
+            age: formData.age,
+            gender: formData.gender,
+            height: formData.height,
+            weight: formData.weight,
+          };
+
+      console.log("Request URL:", url);
+      console.log("Request Body:", body);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        credentials: 'include',
+      });
+
+      console.log("Response Status:", response.status);
+      console.log("Response Headers:", response.headers);
+
+      const contentType = response.headers.get('Content-Type');
+      if (!response.ok) {
+        const errorData = contentType && contentType.includes('application/json')
+          ? await response.json()
+          : { message: 'An error occurred' };
+        console.error("Error Response:", errorData);
+        throw new Error(errorData.message || 'Failed to authenticate');
+      }
+
+      const data = contentType && contentType.includes('application/json')
+        ? await response.json()
+        : {};
+
+      console.log(`${isLogin ? 'Login' : 'Signup'} successful:`, data);
+
+      if (isLogin) {
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+        }
+        login(); // Call the login function passed as a prop
+      } else {
+        // Switch to login mode after successful signup
+        alert("Signup successful! Please log in.");
+        setIsLogin(true);
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          age: '',
+          gender: '',
+          height: '',
+          weight: '',
+        });
+      }
+    } catch (error) {
+      console.error(`Error during ${isLogin ? 'login' : 'signup'}:`, error.message);
+      alert(error.message);
+    }
   };
 
   const toggleAuthMode = () => {
     setIsLogin(!isLogin);
-    //Reset form data when switching modes
     setFormData({
       name: '',
       email: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      age: '',
+      gender: '',
+      height: '',
+      weight: '',
     });
   };
-
-  // const userMessage = {
-  //   id: Date.now().toString(),
-  //   content: input,
-  //   sender: "user",
-  //   timestamp: new Date(),
-  // }
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -99,21 +169,90 @@ const Auth = ({ login }) => {
         <motion.form variants={itemVariants} className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             {!isLogin && (
-              <div>
-                <label htmlFor="name" className="form-label">
-                  Full Name
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="John Doe"
-                />
-              </div>
+              <>
+                <div>
+                  <label htmlFor="name" className="form-label">
+                    Full Name
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="input-field"
+                    placeholder="John Doe"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="age" className="form-label">
+                    Age
+                  </label>
+                  <input
+                    id="age"
+                    name="age"
+                    type="number"
+                    required
+                    value={formData.age}
+                    onChange={handleChange}
+                    className="input-field"
+                    placeholder="25"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="gender" className="form-label">
+                    Gender
+                  </label>
+                  <select
+                    id="gender"
+                    name="gender"
+                    required
+                    value={formData.gender}
+                    onChange={handleChange}
+                    className="input-field"
+                  >
+                    <option value="" disabled>Select your gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="height" className="form-label">
+                    Height (cm)
+                  </label>
+                  <input
+                    id="height"
+                    name="height"
+                    type="number"
+                    required
+                    value={formData.height}
+                    onChange={handleChange}
+                    className="input-field"
+                    placeholder="170"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="weight" className="form-label">
+                    Weight (kg)
+                  </label>
+                  <input
+                    id="weight"
+                    name="weight"
+                    type="number"
+                    required
+                    value={formData.weight}
+                    onChange={handleChange}
+                    className="input-field"
+                    placeholder="70"
+                  />
+                </div>
+              </>
             )}
 
             <div>
