@@ -36,7 +36,7 @@ const WeightBmiCharts = ({ weights, heights }) => {
       transition={{ duration: 0.5 }}
     >
       <div className="w-full md:w-1/2 bg-white shadow-md rounded-2xl p-4  ">
-        <h2 className="text-lg font-semibold mb-3">Weight Trend</h2>
+        <h2 className="text-lg font-semibold mb-3 text-gray-800">Weight Trend</h2>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -49,7 +49,7 @@ const WeightBmiCharts = ({ weights, heights }) => {
       </div>
 
       <div className="w-full md:w-1/2 bg-white shadow-md rounded-2xl p-4">
-        <h2 className="text-lg font-semibold mb-3">BMI Trend</h2>
+        <h2 className="text-lg font-semibold mb-3 text-gray-800">BMI Trend</h2>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
