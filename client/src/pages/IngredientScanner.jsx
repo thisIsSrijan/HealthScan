@@ -1,6 +1,7 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Upload, Camera, CheckCircle, XCircle, AlertCircle, RefreshCw, AlertTriangle, Info } from "lucide-react"
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const IngredientScanner = () => {
   const [file, setFile] = useState(null)
@@ -8,54 +9,15 @@ const IngredientScanner = () => {
   const [scanResult, setScanResult] = useState(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showDetails, setShowDetails] = useState({})
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 768);
 
   const fileInputRef = useRef(null)
 
-  //dummy scan results
-  const mockScanResult = {
-    overallRating: "Caution",
-    overallColor: "text-yellow-500 dark:text-yellow-400",
-    userSpecificWarning: "Contains peanuts (you have a peanut allergy)",
-    ingredients: [
-      {
-        name: "Whole Grain Wheat",
-        safety: "safe",
-        description: "A nutritious grain that provides fiber and essential nutrients.",
-      },
-      {
-        name: "Peanuts",
-        safety: "danger",
-        description: "Common allergen that can cause severe reactions in sensitive individuals.",
-        warning: "You have a peanut allergy listed in your profile.",
-      },
-      {
-        name: "High Fructose Corn Syrup",
-        safety: "caution",
-        description: "A sweetener that may contribute to weight gain and metabolic issues when consumed in excess.",
-      },
-      {
-        name: "Sodium Nitrite",
-        safety: "caution",
-        description:
-          "A preservative that in high amounts has been linked to increased risk of certain health conditions.",
-      },
-      {
-        name: "Vitamin B12",
-        safety: "safe",
-        description: "An essential vitamin that helps keep the body's nerve and blood cells healthy.",
-      },
-      {
-        name: "Natural Flavors",
-        safety: "info",
-        description: "A broad term for flavoring agents derived from plant or animal sources.",
-      },
-    ],
-    nutritionalComments: [
-      "High in added sugars compared to your daily recommended intake",
-      "Contains moderate amount of sodium",
-      "Good source of fiber",
-    ],
-  }
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0]
@@ -96,14 +58,41 @@ const IngredientScanner = () => {
     fileInputRef.current.click()
   }
 
-  const analyzeImage = () => {
+  const analyzeImage = async () => {
+    if (!file) {
+      alert("Please upload an image before analyzing.")
+      return
+    }
+
     setIsAnalyzing(true)
 
-    //API call delay mock
-    setTimeout(() => {
-      setScanResult(mockScanResult)
+    try {
+      const formData = new FormData()
+      formData.append("image", file)
+
+      const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/upload`, {
+        method: "POST",
+        credentials: "include", // Include cookies for authentication
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to analyze the image.")
+      }
+
+      const data = await response.json()
+      console.log("Analysis Result:", data)
+
+      // Update scanResult with the response from the backend
+      setScanResult(data.groqResponse)
+      console.log("Scan Result:", data.groqResponse)
+    } catch (error) {
+      console.error("Error during image analysis:", error.message)
+      alert(error.message)
+    } finally {
       setIsAnalyzing(false)
-    }, 2000)
+    }
   }
 
   const resetScanner = () => {
@@ -117,6 +106,18 @@ const IngredientScanner = () => {
       ...prev,
       [ingredient]: !prev[ingredient],
     }))
+  }
+
+  // Add this function to group ingredients by safety
+  const groupIngredientsBySafety = (ingredients) => {
+    return ingredients.reduce((groups, ingredient) => {
+      const { safety } = ingredient
+      if (!groups[safety]) {
+        groups[safety] = []
+      }
+      groups[safety].push(ingredient)
+      return groups
+    }, {})
   }
 
   //Safety badge colors
@@ -154,6 +155,203 @@ const IngredientScanner = () => {
       transition: { duration: 0.5 },
     },
   }
+
+  // Function to prepare data for macronutrient chart
+  const prepareMacroData = (nutrition) => {
+    if (!nutrition) return [];
+    
+    const carbs = nutrition["Carbohydrate"]?.per_100g || 0;
+    const protein = nutrition["Protein"]?.per_100g || 0;
+    const fat = nutrition["Total fat"]?.per_100g || 0;
+    
+    return [
+      { name: 'Carbs', value: carbs, color: '#4ade80' },
+      { name: 'Protein', value: protein, color: '#60a5fa' },
+      { name: 'Fat', value: fat, color: '#f87171' }
+    ].filter(item => item.value > 0);
+  };
+  
+  // Function to prepare data for fat composition chart
+  const prepareFatData = (nutrition) => {
+    if (!nutrition) return [];
+    
+    const saturated = nutrition["Saturated fat"]?.per_100g || 0;
+    const trans = nutrition["Trans fat"]?.per_100g || 0;
+    const total = nutrition["Total fat"]?.per_100g || 0;
+    const otherFats = Math.max(0, total - saturated - trans);
+    
+    return [
+      { name: 'Saturated', value: saturated, color: '#ef4444' },
+      { name: 'Trans', value: trans, color: '#f97316' },
+      { name: 'Other Fats', value: otherFats, color: '#facc15' }
+    ].filter(item => item.value > 0);
+  };
+  
+  // Function to prepare data for sugar breakdown chart
+  const prepareSugarData = (nutrition) => {
+    if (!nutrition) return [];
+    
+    const totalSugar = nutrition["Total Sugars"]?.per_100g || 0;
+    const addedSugar = nutrition["Added Sugars"]?.per_100g || 0;
+    const naturalSugar = Math.max(0, totalSugar - addedSugar);
+    
+    return [
+      { name: 'Added Sugar', value: addedSugar, color: '#f87171' },
+      { name: 'Natural Sugar', value: naturalSugar, color: '#fcd34d' }
+    ].filter(item => item.value > 0);
+  };
+  
+  // Function to prepare data for sodium and other nutrients
+  const prepareNutrientData = (nutrition) => {
+    if (!nutrition) return [];
+    
+    // Get sodium value and RDA percentage
+    const sodium = nutrition["Sodium"]?.per_100g || 0;
+    const sodiumRda = nutrition["Sodium"]?.rda_percentage || 0;
+    
+    // Add other key nutrients if available
+    const nutrients = [
+      { name: 'Sodium', value: sodiumRda, unit: 'mg', amount: sodium, color: '#fb7185' }
+    ];
+    
+    // Add other nutrients if they exist in the data
+    ['Calcium', 'Iron', 'Potassium', 'Vitamin A', 'Vitamin C'].forEach(nutrient => {
+      if (nutrition[nutrient] && nutrition[nutrient].rda_percentage) {
+        nutrients.push({
+          name: nutrient,
+          value: nutrition[nutrient].rda_percentage,
+          unit: nutrition[nutrient].unit,
+          amount: nutrition[nutrient].per_100g,
+          color: getRandomColor(nutrient)
+        });
+      }
+    });
+    
+    return nutrients;
+  };
+  
+  // Function to get a consistent color for a given nutrient
+  const getRandomColor = (str) => {
+    const colors = [
+      '#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', 
+      '#84cc16', '#eab308', '#f59e0b', '#f97316',
+      '#ef4444', '#ec4899', '#d946ef', '#a855f7'
+    ];
+    
+    // Simple hash function to get a consistent index for each string
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    return colors[Math.abs(hash) % colors.length];
+  };
+  
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    
+    return percent > 0.05 ? (
+      <text 
+        x={x} 
+        y={y} 
+        fill="#fff" 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        fontSize="12"
+      >
+        {`${name} ${(percent * 100).toFixed(0)}%`}
+      </text>
+    ) : null;
+  };
+
+  // Add this new function to prepare data for nutritional weight distribution chart
+  const prepareNutritionalWeightData = (nutrition) => {
+    if (!nutrition) return [];
+    
+    // Filter for entries with unit 'g' or 'mg' and convert mg to g (divide by 1000)
+    const weightData = Object.entries(nutrition)
+      .filter(([name, info]) => (info.unit === 'g' || info.unit === 'mg') && info.per_100g !== null)
+      .map(([name, info]) => ({
+        name: name,
+        value: info.unit === 'mg' ? info.per_100g / 1000 : info.per_100g, // Convert mg to g for consistent scale
+        originalValue: info.per_100g,
+        unit: info.unit,
+        color: getRandomColor(name)
+      }));
+    
+    // Filter out any zero values
+    return weightData.filter(item => item.value > 0);
+  };
+
+  // Custom tooltip for the weight distribution chart
+  const NutritionalWeightTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-md shadow-md">
+          <p className="font-medium text-gray-900 dark:text-gray-100">{data.name}</p>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {data.originalValue} {data.unit} per 100g
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {(payload[0].percent * 100).toFixed(1)}% of measured weight
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Helper function to render the nutritional weight chart responsively
+  const renderNutritionalWeightChart = () => {
+    const data = prepareNutritionalWeightData(scanResult.nutrition_info);
+    if (data.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">
+          No weight-based nutritional data available
+        </div>
+      );
+    }
+    
+    // Determine if we're on mobile
+    const isMobile = windowWidth < 768;
+    
+    return (
+      <div className="h-[300px] md:h-80">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              labelLine={!isMobile}
+              label={isMobile ? null : ({ name, percent }) => 
+                `${name.length > 8 ? name.substring(0, 8) + '...' : name} (${(percent * 100).toFixed(0)}%)`
+              }
+              outerRadius={isMobile ? 70 : 100}
+              fill="#8884d8"
+              dataKey="value"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip content={<NutritionalWeightTooltip />} />
+            <Legend 
+              layout={isMobile ? "horizontal" : "vertical"}
+              align={isMobile ? "center" : "right"}
+              verticalAlign={isMobile ? "bottom" : "middle"}
+              wrapperStyle={isMobile ? { fontSize: '10px' } : null}
+              formatter={(value) => value.length > (isMobile ? 10 : 15) ? `${value.substring(0, isMobile ? 10 : 15)}...` : value}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  };
 
   return (
     <div className="health-container py-8">
@@ -305,53 +503,80 @@ const IngredientScanner = () => {
 
                 <div>
                   <h3 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Ingredient Breakdown</h3>
-                  <div className="space-y-2">
+                  <div className="space-y-6">
                     <AnimatePresence>
-                      {scanResult.ingredients.map((ingredient, index) => (
-                        <motion.div
-                          key={ingredient.name}
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          transition={{ delay: index * 0.1 }}
-                          className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+                      {Object.entries(groupIngredientsBySafety(scanResult.ingredients)).map(([safety, ingredients]) => (
+                        <motion.div 
+                          key={safety} 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className={`border rounded-lg overflow-hidden ${
+                            safety === 'danger' 
+                              ? 'border-red-200 dark:border-red-800' 
+                              : safety === 'caution'
+                                ? 'border-yellow-200 dark:border-yellow-800'
+                                : safety === 'safe'
+                                  ? 'border-green-200 dark:border-green-800'
+                                  : 'border-blue-200 dark:border-blue-800'
+                          }`}
                         >
-                          <div
-                            className="flex justify-between items-center p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
-                            onClick={() => toggleDetails(ingredient.name)}
-                          >
-                            <div className="flex items-center">
-                              <span className={`pill-button mr-2 flex items-center ${safetyColors[ingredient.safety]}`}>
-                                {safetyIcons[ingredient.safety]}
-                                {ingredient.safety.charAt(0).toUpperCase() + ingredient.safety.slice(1)}
-                              </span>
-                              <span className="font-medium text-gray-800 dark:text-gray-200">{ingredient.name}</span>
-                            </div>
-                            <button className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                              {showDetails[ingredient.name] ? (
-                                <XCircle size={18} className="text-gray-500 dark:text-gray-400" />
-                              ) : (
-                                <Info size={18} className="text-gray-500 dark:text-gray-400" />
-                              )}
-                            </button>
+                          <div className={`p-3 ${safetyColors[safety]} flex items-center`}>
+                            {safetyIcons[safety]}
+                            <span className="font-medium ml-1">
+                              {safety.charAt(0).toUpperCase() + safety.slice(1)} Ingredients
+                            </span>
                           </div>
-
-                          {showDetails[ingredient.name] && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="px-3 pb-3"
-                            >
-                              <p className="text-sm text-gray-600 dark:text-gray-400">{ingredient.description}</p>
-
-                              {ingredient.warning && (
-                                <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/30 rounded border border-red-100 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
-                                  {ingredient.warning}
+                          
+                          <div className="p-3 bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
+                            {ingredients.map((ingredient, index) => (
+                              <motion.div
+                                key={ingredient.name}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="py-2 first:pt-0 last:pb-0"
+                              >
+                                {/* Ingredient Header */}
+                                <div
+                                  className="flex justify-between items-center p-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
+                                  onClick={() => toggleDetails(ingredient.name)}
+                                >
+                                  <div className="flex items-center">
+                                    <span className="font-medium text-gray-800 dark:text-gray-200">{ingredient.name}</span>
+                                  </div>
+                                  {/* Toggle Button */}
+                                  <button className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600">
+                                    {showDetails[ingredient.name] ? (
+                                      <XCircle size={18} className="text-gray-500 dark:text-gray-400" />
+                                    ) : (
+                                      <Info size={18} className="text-gray-500 dark:text-gray-400" />
+                                    )}
+                                  </button>
                                 </div>
-                              )}
-                            </motion.div>
-                          )}
+
+                                {/* Ingredient Details (Expandable Section) */}
+                                {showDetails[ingredient.name] && (
+                                  <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="px-2 pt-2"
+                                  >
+                                    {/* Description */}
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{ingredient.description}</p>
+
+                                    {/* Warning (if present) */}
+                                    {ingredient.warning && (
+                                      <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/30 rounded border border-red-100 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
+                                        {ingredient.warning}
+                                      </div>
+                                    )}
+                                  </motion.div>
+                                )}
+                              </motion.div>
+                            ))}
+                          </div>
                         </motion.div>
                       ))}
                     </AnimatePresence>
@@ -368,6 +593,181 @@ const IngredientScanner = () => {
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Nutritional Charts Section */}
+      {scanResult && scanResult.nutrition_info && (
+        <motion.div 
+          variants={itemVariants} 
+          className="card mt-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Nutritional Analysis</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Macronutrient Breakdown */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Macronutrient Breakdown</h3>
+                {prepareMacroData(scanResult.nutrition_info).length > 0 ? (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={prepareMacroData(scanResult.nutrition_info)}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={renderCustomizedLabel}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {prepareMacroData(scanResult.nutrition_info).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value) => [`${value.toFixed(1)}g`, 'Amount']}
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                            borderRadius: '8px',
+                            border: '1px solid #e5e7eb', 
+                            color: '#1f2937'
+                          }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">
+                    No macronutrient data available
+                  </div>
+                )}
+              </div>
+              
+              {/* Fat Composition */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Fat Composition</h3>
+                {prepareFatData(scanResult.nutrition_info).length > 0 ? (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={prepareFatData(scanResult.nutrition_info)}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={renderCustomizedLabel}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {prepareFatData(scanResult.nutrition_info).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value) => [`${value.toFixed(1)}g`, 'Amount']}
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                            borderRadius: '8px',
+                            border: '1px solid #e5e7eb', 
+                            color: '#1f2937'
+                          }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">
+                    No fat composition data available
+                  </div>
+                )}
+              </div>
+              
+              {/* Sugar Breakdown */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Sugar Breakdown</h3>
+                {prepareSugarData(scanResult.nutrition_info).length > 0 ? (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={prepareSugarData(scanResult.nutrition_info)}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={renderCustomizedLabel}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {prepareSugarData(scanResult.nutrition_info).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value) => [`${value.toFixed(1)}g`, 'Amount']}
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                            borderRadius: '8px',
+                            border: '1px solid #e5e7eb', 
+                            color: '#1f2937'
+                          }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">
+                    No sugar data available
+                  </div>
+                )}
+              </div>
+              
+              {/* Nutritional Information Summary */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Key Nutrition Facts (per 100g)</h3>
+                <div className="space-y-3">
+                  {Object.entries(scanResult.nutrition_info).map(([name, info]) => (
+                    <div key={name} className="flex justify-between items-center">
+                      <span className="text-gray-700 dark:text-gray-300">{name}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">
+                        {info.per_100g !== null ? `${info.per_100g} ${info.unit}` : 'N/A'}
+                        {info.rda_percentage ? ` (${info.rda_percentage}% RDA)` : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* UPDATED CHART: Nutritional Weight Distribution */}
+            <div className="mt-6">
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">
+                  Nutritional Weight Distribution (per 100g)
+                </h3>
+                {renderNutritionalWeightChart()}
+                <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                  <p>* This chart shows the proportional weight of measurable nutrients in the product per 100g.</p>
+                  <p>* Milligram values have been converted to grams for consistent scaling.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+              <p>* RDA: Recommended Daily Allowance based on a 2,000 calorie diet.</p>
+              <p>* Values are calculated per 100g of the product unless otherwise stated.</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Instructions Card */}
       <motion.div variants={itemVariants} className="card mt-6">
