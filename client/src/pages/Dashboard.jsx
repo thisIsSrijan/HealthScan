@@ -342,6 +342,7 @@ const Dashboard = () => {
 
         {/* <HealthMetricsCard /> */}
       </motion.div>
+        <HealthMetricsCard weights={userData.weight} heights={userData.height} />
     </div>
   );
 };
