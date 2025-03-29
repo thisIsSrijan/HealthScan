@@ -5,7 +5,8 @@ import axios from "axios";
 import ProfileCard from "../components/ProfileCard";
 import MedicalInfoCard from "../components/MedicalnfoCard";
 import HealthMetricsCard from "../components/HealthMetricsCard";
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 // Constants
 const BACKEND_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:8080";
 const AUTH_HEADERS = {
@@ -166,7 +167,7 @@ const Dashboard = () => {
     const newWeight = Number.parseFloat(editData.weight);
 
     if (isNaN(newAge) || isNaN(newHeight) || isNaN(newWeight)) {
-      alert("Please enter valid numbers for age, height, and weight");
+      toast.warn("Please enter valid numbers for age, height, and weight");
       return;
     }
 
@@ -182,7 +183,7 @@ const Dashboard = () => {
       toggleEditMode("profile");
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("Failed to update profile. Please try again.");
+      toast.error("Failed to update profile. Please try again.");
     }
   };
 
@@ -197,11 +198,11 @@ const Dashboard = () => {
       setEditData((prev) => ({ ...prev, newAllergy: "" }));
     } catch (error) {
       if (error.response?.status === 409) {
-        alert("Allergy already exists");
+        toast.warn("Allergy already exists");
         return;
       }
       console.error("Error adding allergy:", error);
-      alert("Failed to add allergy. Please try again.");
+      toast.error("Failed to add allergy. Please try again.");
     }
   };
 
@@ -215,7 +216,7 @@ const Dashboard = () => {
       }));
     } catch (error) {
       console.error("Error removing allergy:", error);
-      alert("Failed to remove allergy. Please try again.");
+      toast.error("Failed to remove allergy. Please try again.");
     }
   };
 
@@ -230,11 +231,11 @@ const Dashboard = () => {
       setEditData((prev) => ({ ...prev, newCondition: "" }));
     } catch (error) {
       if (error.response?.status === 409) {
-        alert("Medical condition already exists");
+        toast.warn("Medical condition already exists");
         return;
       }
       console.error("Error adding condition:", error);
-      alert("Failed to add condition. Please try again.");
+      toast.error("Failed to add condition. Please try again.");
     }
   };
 
@@ -248,7 +249,7 @@ const Dashboard = () => {
       }));
     } catch (error) {
       console.error("Error removing condition:", error);
-      alert("Failed to remove condition. Please try again.");
+      toast.warn("Failed to remove condition. Please try again.");
     }
   };
 
@@ -263,11 +264,11 @@ const Dashboard = () => {
       setEditData((prev) => ({ ...prev, newMedication: "" }));
     } catch (error) {
       if (error.response?.status === 409) {
-        alert("Medication already exists");
+        toast.warn("Medication already exists");
         return;
       }
       console.error("Error adding medication:", error);
-      alert("Failed to add medication. Please try again.");
+      toast.error("Failed to add medication. Please try again.");
     }
   };
 
@@ -281,7 +282,7 @@ const Dashboard = () => {
       }));
     } catch (error) {
       console.error("Error removing medication:", error);
-      alert("Failed to remove medication. Please try again.");
+      toast.error("Failed to remove medication. Please try again.");
     }
   };
 
