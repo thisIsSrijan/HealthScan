@@ -6,6 +6,7 @@ import Auth from "./pages/Auth"
 import Dashboard from "./pages/Dashboard"
 import Chatbot from "./pages/Chatbot"
 import IngredientScanner from "./pages/IngredientScanner"
+import TextExtractorDemo from "./pages/TextExtractorDemo"
 import { ThemeProvider } from "./context/ThemeContext"
 import Navbar from "./components/Navbar"
 import "./index.css"
@@ -35,7 +36,7 @@ function App() {
   return (
     <ThemeProvider>
       <Router>
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-200">
+        <div className="min-h-screen transition-colors duration-200 bg-gradient-to-br from-green-50 to-teal-50 dark:from-gray-900 dark:to-gray-800">
           <div className="flex h-screen overflow-hidden">
             {isAuthenticated && <Sidebar logout={logout} />}
             <main className="flex-1 overflow-y-auto">
@@ -45,6 +46,7 @@ function App() {
                   <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/" />} />
                   <Route path="/chatbot" element={isAuthenticated ? <Chatbot /> : <Navigate to="/" />} />
                   <Route path="/scan" element={isAuthenticated ? <IngredientScanner /> : <Navigate to="/" />} />
+                  <Route path="/textExtractorDemo" element={isAuthenticated ? <TextExtractorDemo /> : <Navigate to="/" />} />
                 </Routes>
               </AnimatePresence>
             </main>

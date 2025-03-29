@@ -14,7 +14,7 @@ const app = express();
 
 //CORS policy
 const corsOption = {
-    origin: process.env.CLIENT_URL,
+    origin: "http://localhost:5173",
     credentials: true,
     optionSuccessStatus: 200,
 }
