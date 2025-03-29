@@ -14,10 +14,11 @@ const app = express();
 
 //CORS policy
 const corsOption = {
-    origin:  'http://localhost:5173' || 'https://dev-summit-25-ebon.vercel.app', // Replace '*' with your frontend URL for credentials
+    origin: ['http://localhost:5173', 'https://dev-summit-25-ebon.vercel.app'], // Allow multiple origins
     credentials: true, // Allow credentials (cookies)
     optionSuccessStatus: 200,
-}
+};
+
 
 // Middleware
 app.use(cors(corsOption));
