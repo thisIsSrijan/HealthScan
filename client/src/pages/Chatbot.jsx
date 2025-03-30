@@ -113,10 +113,9 @@ const Chatbot = () => {
       >
         <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Health Assistant</h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Chat with your virtual doctor about symptoms and health concerns
+          Chat with your virtual doctor about symptoms and health concerns.<span className="text-amber-400 font-bold"> Note that our system can make mistakes sometime as it is still under development.</span>
         </p>
       </motion.div>
-
       <div className="flex flex-col flex-1 overflow-hidden card">
         <div className="flex-1 p-4 overflow-y-auto">
           <AnimatePresence>

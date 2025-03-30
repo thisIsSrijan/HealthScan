@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Upload, Camera, CheckCircle, XCircle, AlertCircle, RefreshCw, AlertTriangle, Info } from "lucide-react"
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 const IngredientScanner = () => {
   const [file, setFile] = useState(null)
@@ -9,58 +11,120 @@ const IngredientScanner = () => {
   const [scanResult, setScanResult] = useState(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showDetails, setShowDetails] = useState({})
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 768);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 768)
 
   const fileInputRef = useRef(null)
 
+  const showErrorToast = (message) => {
+    toast.error(message, {
+      icon: <XCircle className="text-red-500" />,
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    })
+  }
+
+  const showSuccessToast = (message) => {
+    toast.success(message, {
+      icon: <CheckCircle className="text-green-500" />,
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    })
+  }
+
+  const showWarningToast = (message) => {
+    toast.warning(message, {
+      icon: <AlertTriangle className="text-yellow-500" />,
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    })
+  }
+
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    try {
+      const handleResize = () => setWindowWidth(window.innerWidth)
+      window.addEventListener('resize', handleResize)
+      return () => window.removeEventListener('resize', handleResize)
+    } catch (error) {
+      showErrorToast(`Window resize error: ${error.message}`)
+    }
+  }, [])
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0]
+    try {
+      const selectedFile = e.target.files[0]
 
-    if (selectedFile) {
-      setFile(selectedFile)
+      if (selectedFile) {
+        setFile(selectedFile)
 
-      const reader = new FileReader()
-      reader.onload = () => {
-        setPreview(reader.result)
-        setScanResult(null)
+        const reader = new FileReader()
+        reader.onload = () => {
+          setPreview(reader.result)
+          setScanResult(null)
+        }
+        reader.onerror = () => {
+          throw new Error("Failed to read the file")
+        }
+        reader.readAsDataURL(selectedFile)
       }
-      reader.readAsDataURL(selectedFile)
+    } catch (error) {
+      showErrorToast(`File upload error: ${error.message}`)
     }
   }
 
   const handleDrop = (e) => {
-    e.preventDefault()
+    try {
+      e.preventDefault()
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const droppedFile = e.dataTransfer.files[0]
-      setFile(droppedFile)
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        const droppedFile = e.dataTransfer.files[0]
+        setFile(droppedFile)
 
-      const reader = new FileReader()
-      reader.onload = () => {
-        setPreview(reader.result)
-        setScanResult(null)
+        const reader = new FileReader()
+        reader.onload = () => {
+          setPreview(reader.result)
+          setScanResult(null)
+        }
+        reader.onerror = () => {
+          throw new Error("Failed to read the dropped file")
+        }
+        reader.readAsDataURL(droppedFile)
       }
-      reader.readAsDataURL(droppedFile)
+    } catch (error) {
+      showErrorToast(`File drop error: ${error.message}`)
     }
   }
 
   const handleDragOver = (e) => {
-    e.preventDefault()
+    try {
+      e.preventDefault()
+    } catch (error) {
+      showErrorToast(`Drag over error: ${error.message}`)
+    }
   }
 
   const triggerFileInput = () => {
-    fileInputRef.current.click()
+    try {
+      fileInputRef.current.click()
+    } catch (error) {
+      showErrorToast(`Failed to trigger file input: ${error.message}`)
+    }
   }
 
   const analyzeImage = async () => {
     if (!file) {
-      alert("Please upload an image before analyzing.")
+      showWarningToast("Please upload an image before analyzing.")
       return
     }
 
@@ -72,7 +136,7 @@ const IngredientScanner = () => {
 
       const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/upload`, {
         method: "POST",
-        credentials: "include", // Include cookies for authentication
+        credentials: "include",
         body: formData,
       })
 
@@ -84,40 +148,53 @@ const IngredientScanner = () => {
       const data = await response.json()
       console.log("Analysis Result:", data)
 
-      // Update scanResult with the response from the backend
       setScanResult(data.groqResponse)
       console.log("Scan Result:", data.groqResponse)
+      showSuccessToast("Image analyzed successfully!")
     } catch (error) {
       console.error("Error during image analysis:", error.message)
-      alert(error.message)
+      showErrorToast(error.message)
     } finally {
       setIsAnalyzing(false)
     }
   }
 
   const resetScanner = () => {
-    setFile(null)
-    setPreview(null)
-    setScanResult(null)
+    try {
+      setFile(null)
+      setPreview(null)
+      setScanResult(null)
+      showSuccessToast("Scanner reset successfully")
+    } catch (error) {
+      showErrorToast(`Failed to reset scanner: ${error.message}`)
+    }
   }
 
   const toggleDetails = (ingredient) => {
-    setShowDetails((prev) => ({
-      ...prev,
-      [ingredient]: !prev[ingredient],
-    }))
+    try {
+      setShowDetails((prev) => ({
+        ...prev,
+        [ingredient]: !prev[ingredient],
+      }))
+    } catch (error) {
+      showErrorToast(`Failed to toggle details: ${error.message}`)
+    }
   }
 
-  // Add this function to group ingredients by safety
   const groupIngredientsBySafety = (ingredients) => {
-    return ingredients?.reduce((groups, ingredient) => {
-      const { safety } = ingredient
-      if (!groups[safety]) {
-        groups[safety] = []
-      }
-      groups[safety].push(ingredient)
-      return groups
-    }, {})
+    try {
+      return ingredients?.reduce((groups, ingredient) => {
+        const { safety } = ingredient
+        if (!groups[safety]) {
+          groups[safety] = []
+        }
+        groups[safety].push(ingredient)
+        return groups
+      }, {})
+    } catch (error) {
+      showErrorToast(`Failed to group ingredients: ${error.message}`)
+      return {}
+    }
   }
 
   //Safety badge colors
@@ -156,205 +233,256 @@ const IngredientScanner = () => {
     },
   }
 
-  // Function to prepare data for macronutrient chart
   const prepareMacroData = (nutrition) => {
-    if (!nutrition) return [];
-    
-    const carbs = nutrition["Carbohydrate"]?.per_100g || 0;
-    const protein = nutrition["Protein"]?.per_100g || 0;
-    const fat = nutrition["Total fat"]?.per_100g || 0;
-    
-    return [
-      { name: 'Carbs', value: carbs, color: '#4ade80' },
-      { name: 'Protein', value: protein, color: '#60a5fa' },
-      { name: 'Fat', value: fat, color: '#f87171' }
-    ].filter(item => item.value > 0);
-  };
-  
-  // Function to prepare data for fat composition chart
-  const prepareFatData = (nutrition) => {
-    if (!nutrition) return [];
-    
-    const saturated = nutrition["Saturated fat"]?.per_100g || 0;
-    const trans = nutrition["Trans fat"]?.per_100g || 0;
-    const total = nutrition["Total fat"]?.per_100g || 0;
-    const otherFats = Math.max(0, total - saturated - trans);
-    
-    return [
-      { name: 'Saturated', value: saturated, color: '#ef4444' },
-      { name: 'Trans', value: trans, color: '#f97316' },
-      { name: 'Other Fats', value: otherFats, color: '#facc15' }
-    ].filter(item => item.value > 0);
-  };
-  
-  // Function to prepare data for sugar breakdown chart
-  const prepareSugarData = (nutrition) => {
-    if (!nutrition) return [];
-    
-    const totalSugar = nutrition["Total Sugars"]?.per_100g || 0;
-    const addedSugar = nutrition["Added Sugars"]?.per_100g || 0;
-    const naturalSugar = Math.max(0, totalSugar - addedSugar);
-    
-    return [
-      { name: 'Added Sugar', value: addedSugar, color: '#f87171' },
-      { name: 'Natural Sugar', value: naturalSugar, color: '#fcd34d' }
-    ].filter(item => item.value > 0);
-  };
-  
-  // Function to prepare data for sodium and other nutrients
-  const prepareNutrientData = (nutrition) => {
-    if (!nutrition) return [];
-    
-    // Get sodium value and RDA percentage
-    const sodium = nutrition["Sodium"]?.per_100g || 0;
-    const sodiumRda = nutrition["Sodium"]?.rda_percentage || 0;
-    
-    // Add other key nutrients if available
-    const nutrients = [
-      { name: 'Sodium', value: sodiumRda, unit: 'mg', amount: sodium, color: '#fb7185' }
-    ];
-    
-    // Add other nutrients if they exist in the data
-    ['Calcium', 'Iron', 'Potassium', 'Vitamin A', 'Vitamin C'].forEach(nutrient => {
-      if (nutrition[nutrient] && nutrition[nutrient].rda_percentage) {
-        nutrients?.push({
-          name: nutrient,
-          value: nutrition[nutrient].rda_percentage,
-          unit: nutrition[nutrient].unit,
-          amount: nutrition[nutrient].per_100g,
-          color: getRandomColor(nutrient)
-        });
-      }
-    });
-    
-    return nutrients;
-  };
-  
-  // Function to get a consistent color for a given nutrient
-  const getRandomColor = (str) => {
-    const colors = [
-      '#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', 
-      '#84cc16', '#eab308', '#f59e0b', '#f97316',
-      '#ef4444', '#ec4899', '#d946ef', '#a855f7'
-    ];
-    
-    // Simple hash function to get a consistent index for each string
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    try {
+      if (!nutrition) return [];
+      
+      const carbs = nutrition["Carbohydrate"]?.per_100g || 0;
+      const protein = nutrition["Protein"]?.per_100g || 0;
+      const fat = nutrition["Total fat"]?.per_100g || 0;
+      
+      return [
+        { name: 'Carbs', value: carbs, color: '#4ade80' },
+        { name: 'Protein', value: protein, color: '#60a5fa' },
+        { name: 'Fat', value: fat, color: '#f87171' }
+      ].filter(item => item.value > 0);
+    } catch (error) {
+      showErrorToast(`Failed to prepare macro data: ${error.message}`)
+      return []
     }
-    
-    return colors[Math.abs(hash) % colors.length];
-  };
+  }
+  
+  const prepareFatData = (nutrition) => {
+    try {
+      if (!nutrition) return [];
+      
+      const saturated = nutrition["Saturated fat"]?.per_100g || 0;
+      const trans = nutrition["Trans fat"]?.per_100g || 0;
+      const total = nutrition["Total fat"]?.per_100g || 0;
+      const otherFats = Math.max(0, total - saturated - trans);
+      
+      return [
+        { name: 'Saturated', value: saturated, color: '#ef4444' },
+        { name: 'Trans', value: trans, color: '#f97316' },
+        { name: 'Other Fats', value: otherFats, color: '#facc15' }
+      ].filter(item => item.value > 0);
+    } catch (error) {
+      showErrorToast(`Failed to prepare fat data: ${error.message}`)
+      return []
+    }
+  }
+  
+  const prepareSugarData = (nutrition) => {
+    try {
+      if (!nutrition) return [];
+      
+      const totalSugar = nutrition["Total Sugars"]?.per_100g || 0;
+      const addedSugar = nutrition["Added Sugars"]?.per_100g || 0;
+      const naturalSugar = Math.max(0, totalSugar - addedSugar);
+      
+      return [
+        { name: 'Added Sugar', value: addedSugar, color: '#f87171' },
+        { name: 'Natural Sugar', value: naturalSugar, color: '#fcd34d' }
+      ].filter(item => item.value > 0);
+    } catch (error) {
+      showErrorToast(`Failed to prepare sugar data: ${error.message}`)
+      return []
+    }
+  }
+  
+  const prepareNutrientData = (nutrition) => {
+    try {
+      if (!nutrition) return [];
+      
+      const sodium = nutrition["Sodium"]?.per_100g || 0;
+      const sodiumRda = nutrition["Sodium"]?.rda_percentage || 0;
+      
+      const nutrients = [
+        { name: 'Sodium', value: sodiumRda, unit: 'mg', amount: sodium, color: '#fb7185' }
+      ];
+      
+      ['Calcium', 'Iron', 'Potassium', 'Vitamin A', 'Vitamin C'].forEach(nutrient => {
+        if (nutrition[nutrient] && nutrition[nutrient].rda_percentage) {
+          nutrients?.push({
+            name: nutrient,
+            value: nutrition[nutrient].rda_percentage,
+            unit: nutrition[nutrient].unit,
+            amount: nutrition[nutrient].per_100g,
+            color: getRandomColor(nutrient)
+          });
+        }
+      });
+      
+      return nutrients;
+    } catch (error) {
+      showErrorToast(`Failed to prepare nutrient data: ${error.message}`)
+      return []
+    }
+  }
+  
+  const getRandomColor = (str) => {
+    try {
+      const colors = [
+        '#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', 
+        '#84cc16', '#eab308', '#f59e0b', '#f97316',
+        '#ef4444', '#ec4899', '#d946ef', '#a855f7'
+      ];
+      
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      
+      return colors[Math.abs(hash) % colors.length];
+    } catch (error) {
+      showErrorToast(`Failed to generate color: ${error.message}`)
+      return '#8884d8' // Default color
+    }
+  }
   
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }) => {
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-    
-    return percent > 0.05 ? (
-      <text 
-        x={x} 
-        y={y} 
-        fill="#fff" 
-        textAnchor={x > cx ? 'start' : 'end'} 
-        dominantBaseline="central"
-        fontSize="12"
-      >
-        {`${name} ${(percent * 100).toFixed(0)}%`}
-      </text>
-    ) : null;
-  };
+    try {
+      const RADIAN = Math.PI / 180;
+      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+      
+      return percent > 0.05 ? (
+        <text 
+          x={x} 
+          y={y} 
+          fill="#fff" 
+          textAnchor={x > cx ? 'start' : 'end'} 
+          dominantBaseline="central"
+          fontSize="12"
+        >
+          {`${name} ${(percent * 100).toFixed(0)}%`}
+        </text>
+      ) : null;
+    } catch (error) {
+      showErrorToast(`Failed to render chart label: ${error.message}`)
+      return null
+    }
+  }
 
-  // Add this new function to prepare data for nutritional weight distribution chart
   const prepareNutritionalWeightData = (nutrition) => {
-    if (!nutrition) return [];
-    
-    // Filter for entries with unit 'g' or 'mg' and convert mg to g (divide by 1000)
-    const weightData = Object?.entries(nutrition)
-     ?.filter(([name, info]) => (info.unit === 'g' || info.unit === 'mg') && info.per_100g !== null)
-      ?.map(([name, info]) => ({
-        name: name,
-        value: info.unit === 'mg' ? info.per_100g / 1000 : info.per_100g, // Convert mg to g for consistent scale
-        originalValue: info.per_100g,
-        unit: info.unit,
-        color: getRandomColor(name)
-      }));
-    
-    // Filter out any zero values
-    return weightData?.filter(item => item.value > 0);
+    try {
+      if (!nutrition || typeof nutrition !== 'object') return [];
+      
+      const weightData = Object.entries(nutrition)
+        .filter(([name, info]) => 
+          info && 
+          (info.unit === 'g' || info.unit === 'mg') && 
+          info.per_100g !== null && 
+          info.per_100g !== undefined
+        )
+        .map(([name, info]) => ({
+          name: name,
+          value: info.unit === 'mg' ? info.per_100g / 1000 : info.per_100g,
+          originalValue: info.per_100g,
+          unit: info.unit,
+          color: getRandomColor(name)
+        }));
+      
+      return weightData.filter(item => item.value > 0);
+    } catch (error) {
+      showErrorToast(`Failed to prepare weight data: ${error.message}`);
+      return [];
+    }
   };
 
-  // Custom tooltip for the weight distribution chart
   const NutritionalWeightTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
+    try {
+      if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        return (
+          <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-md shadow-md">
+            <p className="font-medium text-gray-900 dark:text-gray-100">{data?.name}</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {data?.originalValue} {data?.unit} per 100g
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {(payload[0]?.percent * 100).toFixed(1)}% of measured weight
+            </p>
+          </div>
+        );
+      }
+      return null;
+    } catch (error) {
+      showErrorToast(`Failed to render tooltip: ${error.message}`)
+      return null
+    }
+  }
+
+  const renderNutritionalWeightChart = () => {
+    try {
+      const data = prepareNutritionalWeightData(scanResult?.nutrition_info);
+      if (data?.length === 0) {
+        return (
+          <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">
+            No weight-based nutritional data available
+          </div>
+        );
+      }
+      
+      const isMobile = windowWidth < 768;
+      
       return (
-        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-md shadow-md">
-          <p className="font-medium text-gray-900 dark:text-gray-100">{data?.name}</p>
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            {data?.originalValue} {data?.unit} per 100g
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {(payload[0]?.percent * 100).toFixed(1)}% of measured weight
-          </p>
+        <div className="h-[300px] md:h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                labelLine={!isMobile}
+                label={isMobile ? null : ({ name, percent }) => 
+                  `${name.length > 8 ? name.substring(0, 8) + '...' : name} (${(percent * 100).toFixed(0)}%)`
+                }
+                outerRadius={isMobile ? 70 : 100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip content={<NutritionalWeightTooltip />} />
+              <Legend 
+                layout={isMobile ? "horizontal" : "vertical"}
+                align={isMobile ? "center" : "right"}
+                verticalAlign={isMobile ? "bottom" : "middle"}
+                wrapperStyle={isMobile ? { fontSize: '10px' } : null}
+                formatter={(value) => value.length > (isMobile ? 10 : 15) ? `${value.substring(0, isMobile ? 10 : 15)}...` : value}
+              />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       );
-    }
-    return null;
-  };
-
-  // Helper function to render the nutritional weight chart responsively
-  const renderNutritionalWeightChart = () => {
-    const data = prepareNutritionalWeightData(scanResult?.nutrition_info);
-    if (data?.length === 0) {
+    } catch (error) {
+      showErrorToast(`Failed to render weight chart: ${error.message}`)
       return (
         <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">
-          No weight-based nutritional data available
+          Error displaying chart
         </div>
-      );
+      )
     }
-    
-    // Determine if we're on mobile
-    const isMobile = windowWidth < 768;
-    
-    return (
-      <div className="h-[300px] md:h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              labelLine={!isMobile}
-              label={isMobile ? null : ({ name, percent }) => 
-                `${name.length > 8 ? name.substring(0, 8) + '...' : name} (${(percent * 100).toFixed(0)}%)`
-              }
-              outerRadius={isMobile ? 70 : 100}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip content={<NutritionalWeightTooltip />} />
-            <Legend 
-              layout={isMobile ? "horizontal" : "vertical"}
-              align={isMobile ? "center" : "right"}
-              verticalAlign={isMobile ? "bottom" : "middle"}
-              wrapperStyle={isMobile ? { fontSize: '10px' } : null}
-              formatter={(value) => value.length > (isMobile ? 10 : 15) ? `${value.substring(0, isMobile ? 10 : 15)}...` : value}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-    );
-  };
+  }
 
   return (
     <div className="health-container py-8">
+            {/* Add ToastContainer at the root of your component */}
+            <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -366,7 +494,6 @@ const IngredientScanner = () => {
           Upload an image of product ingredients to get personalized health insights
         </p>
       </motion.div>
-
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -505,7 +632,7 @@ const IngredientScanner = () => {
                   <h3 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Ingredient Breakdown</h3>
                   <div className="space-y-6">
                     <AnimatePresence>
-                      {Object.entries(groupIngredientsBySafety(scanResult?.ingredients))?.map(([safety, ingredients]) => (
+                      {Object?.entries(groupIngredientsBySafety(scanResult?.ingredients))?.map(([safety, ingredients]) => (
                         <motion.div 
                           key={safety} 
                           initial={{ opacity: 0 }}
@@ -810,9 +937,9 @@ const IngredientScanner = () => {
           </p>
         </div>
       </motion.div>
-    </div>
+      </div>
   )
 }
 
-export default IngredientScanner
+export default IngredientScanner;
 
