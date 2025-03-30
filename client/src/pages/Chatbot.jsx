@@ -151,7 +151,7 @@ const Chatbot = () => {
   };
 
   return (
-    <div className="health-container flex flex-col h-[calc(100vh-4rem)]">
+    <div className="health-container flex flex-col h-full">
       <motion.div
         className="mb-4"
         initial={{ opacity: 0, y: -20 }}
