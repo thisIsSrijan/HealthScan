@@ -171,6 +171,15 @@ const Dashboard = () => {
       return;
     }
 
+    if (newHeight <= 0 || newWeight <= 0) {
+      toast.warn("Height and weight must be positive numbers");
+      return;
+    }
+    if (newAge < 0 || newAge > 120) {
+      toast.warn("Please enter a valid age");
+      return;
+    }
+
     try {
       await apiService.updateBasicInfo({
         name: editData.name,
@@ -298,6 +307,17 @@ const Dashboard = () => {
 
   return (
     <div className="health-container py-8">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        pauseOnFocusLoss
+        theme="light"
+      />
       <motion.div className="mb-8" initial="hidden" animate="visible" variants={fadeInUp}>
         <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Your Health Dashboard</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
