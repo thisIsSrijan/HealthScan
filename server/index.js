@@ -12,12 +12,22 @@ const userRoutes = require("./routes/user");
 
 const app = express();
 
-//CORS policy
+//Cors policy
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",")
 const corsOption = {
-    origin: ['http://localhost:5173', 'https://dev-summit-25-ebon.vercel.app'], // Allow multiple origins
-    credentials: true, // Allow credentials (cookies)
-    optionSuccessStatus: 200,
-};
+    origin: (origin, callback) => {
+      if (allowedOrigins.includes(origin) || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error("Blocked by CORS, hehe!"));
+      }
+    },
+    methods: "GET,POST,OPTIONS",
+    allowedHeaders: "Content-Type, Authorization",
+    credentials: true,
+  };
+
 
 
 // Middleware
