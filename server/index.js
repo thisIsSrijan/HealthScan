@@ -23,7 +23,7 @@ const corsOption = {
         callback(new Error("Blocked by CORS, hehe!"));
       }
     },
-    methods: "GET,POST,OPTIONS",
+    methods: "GET,POST,PATCH,OPTIONS",
     allowedHeaders: "Content-Type, Authorization",
     credentials: true,
   };
