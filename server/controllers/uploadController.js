@@ -188,6 +188,10 @@ const analyzeWithGroq = async (extractedData, userMedicalHistory, processedText)
       - \"Caution"\ → \"text-yellow-500 dark:text-yellow-400"\
       - \"Danger"\ → \"text-red-500 dark:text-red-400"\
     - Include the complete nutrition_info in your response.
+    - Only return the JSON object keys for reference and do not copy their values. You must generate the values based on the analysis.
+    - Include a *userSpecificWarning* if the user has allergies or medical conditions that affect ingredient safety.
+    - Ensure the JSON is valid and well-structured.
+    - Do not include any additional text or explanations outside the JSON object.
 
     *Output Format (Strict JSON)*:  
     \\\`json

@@ -110,7 +110,7 @@ const IngredientScanner = () => {
 
   // Add this function to group ingredients by safety
   const groupIngredientsBySafety = (ingredients) => {
-    return ingredients.reduce((groups, ingredient) => {
+    return ingredients?.reduce((groups, ingredient) => {
       const { safety } = ingredient
       if (!groups[safety]) {
         groups[safety] = []
@@ -217,7 +217,7 @@ const IngredientScanner = () => {
     // Add other nutrients if they exist in the data
     ['Calcium', 'Iron', 'Potassium', 'Vitamin A', 'Vitamin C'].forEach(nutrient => {
       if (nutrition[nutrient] && nutrition[nutrient].rda_percentage) {
-        nutrients.push({
+        nutrients?.push({
           name: nutrient,
           value: nutrition[nutrient].rda_percentage,
           unit: nutrition[nutrient].unit,
@@ -272,9 +272,9 @@ const IngredientScanner = () => {
     if (!nutrition) return [];
     
     // Filter for entries with unit 'g' or 'mg' and convert mg to g (divide by 1000)
-    const weightData = Object.entries(nutrition)
-      .filter(([name, info]) => (info.unit === 'g' || info.unit === 'mg') && info.per_100g !== null)
-      .map(([name, info]) => ({
+    const weightData = Object?.entries(nutrition)
+     ?.filter(([name, info]) => (info.unit === 'g' || info.unit === 'mg') && info.per_100g !== null)
+      ?.map(([name, info]) => ({
         name: name,
         value: info.unit === 'mg' ? info.per_100g / 1000 : info.per_100g, // Convert mg to g for consistent scale
         originalValue: info.per_100g,
@@ -283,7 +283,7 @@ const IngredientScanner = () => {
       }));
     
     // Filter out any zero values
-    return weightData.filter(item => item.value > 0);
+    return weightData?.filter(item => item.value > 0);
   };
 
   // Custom tooltip for the weight distribution chart
@@ -292,12 +292,12 @@ const IngredientScanner = () => {
       const data = payload[0].payload;
       return (
         <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-md shadow-md">
-          <p className="font-medium text-gray-900 dark:text-gray-100">{data.name}</p>
+          <p className="font-medium text-gray-900 dark:text-gray-100">{data?.name}</p>
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            {data.originalValue} {data.unit} per 100g
+            {data?.originalValue} {data?.unit} per 100g
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {(payload[0].percent * 100).toFixed(1)}% of measured weight
+            {(payload[0]?.percent * 100).toFixed(1)}% of measured weight
           </p>
         </div>
       );
@@ -307,8 +307,8 @@ const IngredientScanner = () => {
 
   // Helper function to render the nutritional weight chart responsively
   const renderNutritionalWeightChart = () => {
-    const data = prepareNutritionalWeightData(scanResult.nutrition_info);
-    if (data.length === 0) {
+    const data = prepareNutritionalWeightData(scanResult?.nutrition_info);
+    if (data?.length === 0) {
       return (
         <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">
           No weight-based nutritional data available
@@ -478,10 +478,10 @@ const IngredientScanner = () => {
               <div className="space-y-4">
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                   <div className="flex items-center mb-2">
-                    <div className={`text-2xl font-bold ${scanResult.overallColor}`}>{scanResult.overallRating}</div>
+                    <div className={`text-2xl font-bold ${scanResult?.overallColor}`}>{scanResult?.overallRating}</div>
                   </div>
 
-                  {scanResult.userSpecificWarning && (
+                  {scanResult?.userSpecificWarning && (
                     <div className="flex items-start mt-2 p-3 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-100 dark:border-red-800">
                       <AlertCircle size={20} className="text-red-500 dark:text-red-400 mr-2 flex-shrink-0 mt-0.5" />
                       <p className="text-red-700 dark:text-red-300 text-sm">{scanResult.userSpecificWarning}</p>
@@ -491,7 +491,7 @@ const IngredientScanner = () => {
                   <div className="mt-4">
                     <h3 className="font-medium mb-2 text-gray-800 dark:text-gray-200">Nutritional Assessment</h3>
                     <ul className="space-y-1">
-                      {scanResult.nutritionalComments.map((comment, index) => (
+                      {scanResult?.nutritionalComments?.map((comment, index) => (
                         <li key={index} className="text-sm flex items-start text-gray-700 dark:text-gray-300">
                           <span className="mr-2">•</span>
                           {comment}
@@ -505,7 +505,7 @@ const IngredientScanner = () => {
                   <h3 className="font-medium mb-3 text-gray-800 dark:text-gray-200">Ingredient Breakdown</h3>
                   <div className="space-y-6">
                     <AnimatePresence>
-                      {Object.entries(groupIngredientsBySafety(scanResult.ingredients)).map(([safety, ingredients]) => (
+                      {Object.entries(groupIngredientsBySafety(scanResult?.ingredients))?.map(([safety, ingredients]) => (
                         <motion.div 
                           key={safety} 
                           initial={{ opacity: 0 }}
@@ -528,9 +528,9 @@ const IngredientScanner = () => {
                           </div>
                           
                           <div className="p-3 bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
-                            {ingredients.map((ingredient, index) => (
+                            {ingredients?.map((ingredient, index) => (
                               <motion.div
-                                key={ingredient.name}
+                                key={ingredient?.name}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: index * 0.1 }}
@@ -539,14 +539,14 @@ const IngredientScanner = () => {
                                 {/* Ingredient Header */}
                                 <div
                                   className="flex justify-between items-center p-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md"
-                                  onClick={() => toggleDetails(ingredient.name)}
+                                  onClick={() => toggleDetails(ingredient?.name)}
                                 >
                                   <div className="flex items-center">
-                                    <span className="font-medium text-gray-800 dark:text-gray-200">{ingredient.name}</span>
+                                    <span className="font-medium text-gray-800 dark:text-gray-200">{ingredient?.name}</span>
                                   </div>
                                   {/* Toggle Button */}
                                   <button className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600">
-                                    {showDetails[ingredient.name] ? (
+                                    {showDetails[ingredient?.name] ? (
                                       <XCircle size={18} className="text-gray-500 dark:text-gray-400" />
                                     ) : (
                                       <Info size={18} className="text-gray-500 dark:text-gray-400" />
@@ -555,7 +555,7 @@ const IngredientScanner = () => {
                                 </div>
 
                                 {/* Ingredient Details (Expandable Section) */}
-                                {showDetails[ingredient.name] && (
+                                {showDetails[ingredient?.name] && (
                                   <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: "auto" }}
@@ -564,12 +564,12 @@ const IngredientScanner = () => {
                                     className="px-2 pt-2"
                                   >
                                     {/* Description */}
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">{ingredient.description}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{ingredient?.description}</p>
 
                                     {/* Warning (if present) */}
-                                    {ingredient.warning && (
+                                    {ingredient?.warning && (
                                       <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/30 rounded border border-red-100 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
-                                        {ingredient.warning}
+                                        {ingredient?.warning}
                                       </div>
                                     )}
                                   </motion.div>
@@ -595,7 +595,7 @@ const IngredientScanner = () => {
       </motion.div>
 
       {/* Nutritional Charts Section */}
-      {scanResult && scanResult.nutrition_info && (
+      {scanResult && scanResult?.nutrition_info && (
         <motion.div 
           variants={itemVariants} 
           className="card mt-6"
@@ -610,12 +610,12 @@ const IngredientScanner = () => {
               {/* Macronutrient Breakdown */}
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Macronutrient Breakdown</h3>
-                {prepareMacroData(scanResult.nutrition_info).length > 0 ? (
+                {prepareMacroData(scanResult?.nutrition_info)?.length > 0 ? (
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={prepareMacroData(scanResult.nutrition_info)}
+                          data={prepareMacroData(scanResult?.nutrition_info)}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
@@ -624,7 +624,7 @@ const IngredientScanner = () => {
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {prepareMacroData(scanResult.nutrition_info).map((entry, index) => (
+                          {prepareMacroData(scanResult?.nutrition_info)?.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
@@ -651,12 +651,12 @@ const IngredientScanner = () => {
               {/* Fat Composition */}
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Fat Composition</h3>
-                {prepareFatData(scanResult.nutrition_info).length > 0 ? (
+                {prepareFatData(scanResult?.nutrition_info)?.length > 0 ? (
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={prepareFatData(scanResult.nutrition_info)}
+                          data={prepareFatData(scanResult?.nutrition_info)}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
@@ -665,7 +665,7 @@ const IngredientScanner = () => {
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {prepareFatData(scanResult.nutrition_info).map((entry, index) => (
+                          {prepareFatData(scanResult?.nutrition_info)?.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
@@ -697,7 +697,7 @@ const IngredientScanner = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={prepareSugarData(scanResult.nutrition_info)}
+                          data={prepareSugarData(scanResult?.nutrition_info)}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
@@ -706,7 +706,7 @@ const IngredientScanner = () => {
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {prepareSugarData(scanResult.nutrition_info).map((entry, index) => (
+                          {prepareSugarData(scanResult?.nutrition_info).map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
@@ -734,12 +734,12 @@ const IngredientScanner = () => {
               <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Key Nutrition Facts (per 100g)</h3>
                 <div className="space-y-3">
-                  {Object.entries(scanResult.nutrition_info).map(([name, info]) => (
+                  {Object.entries(scanResult?.nutrition_info)?.map(([name, info]) => (
                     <div key={name} className="flex justify-between items-center">
                       <span className="text-gray-700 dark:text-gray-300">{name}</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
-                        {info.per_100g !== null ? `${info.per_100g} ${info.unit}` : 'N/A'}
-                        {info.rda_percentage ? ` (${info.rda_percentage}% RDA)` : ''}
+                        {info?.per_100g !== null ? `${info?.per_100g} ${info?.unit}` : 'N/A'}
+                        {info?.rda_percentage ? ` (${info?.rda_percentage}% RDA)` : ''}
                       </span>
                     </div>
                   ))}
