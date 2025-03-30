@@ -1,0 +1,12 @@
+POST http://localhost:8080/api/chatbot
+content-type: application/json
+headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+},
+withCredentials: true,
+
+{
+  "message": "I have a headache and feel dizzy."
+}
+

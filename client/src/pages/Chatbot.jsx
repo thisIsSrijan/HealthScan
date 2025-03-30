@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Send, Mic, MicOff, Bot, User, Loader2 } from "lucide-react"
+import { SendHorizontal , Mic, MicOff, Bot, User, Loader2 } from "lucide-react"
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -8,25 +8,13 @@ const Chatbot = () => {
       id: 1,
       role: "assistant",
       content:
-        "Hello! I'm your virtual health assistant. How can I help you today? You can ask me about your symptoms, general health advice, or information about medical conditions.",
+        "Hello! I'm HealthScan, your virtual health assistant. How can I help you today? You can ask me about your symptoms, general health advice, or information about medical conditions.",
     },
   ])
   const [input, setInput] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
-
-  //dummy responses based on keywords
-  const mockResponses = {
-    headache:
-      "Headaches can be caused by various factors including stress, dehydration, lack of sleep, or eye strain. I recommend staying hydrated, getting adequate rest, and considering over-the-counter pain relievers if needed. If your headache is severe or persistent, please consult with a healthcare professional.",
-    fever:
-      "A fever is often a sign that your body is fighting an infection. For adults, a temperature above 100.4°F (38°C) is considered a fever. Rest, stay hydrated, and take acetaminophen or ibuprofen to help reduce the fever. If your fever is high (above 103°F/39.5°C) or lasts more than three days, please seek medical attention.",
-    cold: "Common cold symptoms include runny nose, sore throat, cough, and mild fever. Rest, drink plenty of fluids, and use over-the-counter cold medications to relieve symptoms. Most colds resolve within 7-10 days. If symptoms worsen or persist longer, consult with a healthcare provider.",
-    diet: "A balanced diet includes a variety of fruits, vegetables, whole grains, lean proteins, and healthy fats. Try to limit processed foods, sugars, and excessive sodium. Based on your profile, focusing on foods rich in fiber and maintaining proper hydration would be beneficial for your overall health.",
-    exercise:
-      "Regular physical activity is crucial for maintaining health. Aim for at least 150 minutes of moderate exercise per week. Given your profile, activities like brisk walking, swimming, or cycling would be appropriate. Remember to start slowly and gradually increase intensity if you're new to exercise.",
-  }
 
   //scrolling to bottom of chat
   const scrollToBottom = () => {
@@ -37,48 +25,64 @@ const Chatbot = () => {
     scrollToBottom()
   }, [messages])
 
-  //dummy function to process user input and generate a response
-  const processMessage = (userMessage) => {
-    setIsLoading(true)
+  
+  const sendMessage = async (userMessage) => {
+    setIsLoading(true);
 
-    // Simulate API delay
-    setTimeout(() => {
-      let response = "I'm not sure how to respond to that. Could you provide more details about your health concern?"
+    // Add user message to chat history
+    setMessages((prev) => [
+      ...prev,
+      { id: prev.length + 1, role: "user", content: userMessage },
+    ]);
 
-      Object.entries(mockResponses).forEach(([keyword, reply]) => {
-        if (userMessage.toLowerCase().includes(keyword)) {
-          response = reply
-        }
-      })
+    try {
+      const response = await fetch("http://localhost:8080/api/chatbot", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ message: userMessage }),
+      });
 
+      const data = await response.json();
+
+      // Add chatbot's response to chat
       setMessages((prev) => [
         ...prev,
-        {
-          id: prev.length + 2,
-          role: "assistant",
-          content: response,
-        },
-      ])
+        { id: prev.length + 2, role: "assistant", content: data.message },
+      ]);
 
-      setIsLoading(false)
-    }, 1500)
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-
-    if (input.trim() === "") return
-
-    const newMessage = {
-      id: messages.length + 1,
-      role: "user",
-      content: input,
+      // If medical analysis is available, add it to chat
+      if (data.analysisResults) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: prev.length + 3,
+            role: "assistant",
+            content: `📋 **Medical Analysis**\n\n**Severity Level:** ${data.analysisResults.severityLevel}\n\n**Symptoms:** ${data.analysisResults.extractedEntities.symptoms.join(", ") || "None"}\n\n**Medications:** ${data.analysisResults.extractedEntities.medications.join(", ") || "None"}\n\n**Risks:**\n- ${data.analysisResults.riskAnalysis.medicationInteractions.map((r) => r.description).join("\n- ") || "None"}\n\n**Recommendations:**\n- ${data.analysisResults.recommendations.map((r) => `${r.priority}: ${r.action}`).join("\n- ")}`,
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error fetching chatbot response:", error);
+      setMessages((prev) => [
+        ...prev,
+        { id: prev.length + 4, role: "assistant", content: "I'm having trouble responding right now. Please try again later." },
+      ]);
     }
 
-    setMessages((prev) => [...prev, newMessage])
-    processMessage(input)
-    setInput("")
-  }
+    setIsLoading(false);
+  };
+
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (input.trim() === "") return;
+    sendMessage(input);
+    setInput("");
+  };
 
   const toggleRecording = () => {
     //Web Speech API implementation tbd
@@ -113,7 +117,7 @@ const Chatbot = () => {
         </p>
       </motion.div>
 
-      <div className="card flex-1 flex flex-col overflow-hidden">
+      <div className="flex flex-col flex-1 overflow-hidden card">
         <div className="flex-1 p-4 overflow-y-auto">
           <AnimatePresence>
             {messages.map((message) => (
@@ -138,10 +142,10 @@ const Chatbot = () => {
                     </div>
                   </div>
                   <div
-                    className={`px-4 py-3 rounded-lg ${
+                    className={`px-4 py-3 ${
                       message.role === "user"
-                        ? "bg-emerald-500 dark:bg-emerald-600 text-white rounded-tr-none"
-                        : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-tl-none"
+                        ? "bg-emerald-500 dark:bg-emerald-600 text-white rounded-bl-xl"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-br-xl"
                     }`}
                   >
                     {message.content}
@@ -155,15 +159,15 @@ const Chatbot = () => {
                 initial="hidden"
                 animate="visible"
                 variants={messageVariants}
-                className="flex mb-4 justify-start"
+                className="flex justify-start mb-4"
               >
                 <div className="flex items-start max-w-3/4">
                   <div className="flex-shrink-0 mr-3">
-                    <div className="w-8 h-8 bg-teal-100 dark:bg-teal-900 text-teal-600 dark:text-teal-300 rounded-full flex items-center justify-center">
+                    <div className="flex items-center justify-center w-8 h-8 text-teal-600 bg-teal-100 rounded-full dark:bg-teal-900 dark:text-teal-300">
                       <Bot size={16} />
                     </div>
                   </div>
-                  <div className="px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-tl-none">
+                  <div className="px-4 py-3 text-gray-800 bg-gray-100 rounded-lg rounded-tl-none dark:bg-gray-700 dark:text-gray-100">
                     <Loader2 className="animate-spin" size={16} />
                   </div>
                 </div>
@@ -191,22 +195,22 @@ const Chatbot = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your health concern..."
-              className="flex-1 input-field py-2"
+              className="flex-1 py-2 input-field"
             />
             <motion.button
               type="submit"
-              className="p-2 bg-emerald-500 dark:bg-emerald-600 text-white rounded-full hover:bg-emerald-600 dark:hover:bg-emerald-700"
+              className="p-2 text-white rounded-full bg-emerald-500 dark:bg-emerald-600 hover:bg-emerald-600 dark:hover:bg-emerald-700"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               disabled={input.trim() === ""}
             >
-              <Send size={20} />
+              <SendHorizontal size={20} />
             </motion.button>
           </form>
 
-          <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 text-center">
+          <div className="mt-3 text-xs text-center text-gray-500 dark:text-gray-400">
             <p>
-              <span className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300 pill-button mr-1">
+              <span className="mr-1 text-yellow-800 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300 pill-button">
                 Note
               </span>
               This virtual assistant is for informational purposes only and does not replace professional medical
