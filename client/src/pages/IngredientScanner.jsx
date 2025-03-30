@@ -491,7 +491,7 @@ const IngredientScanner = () => {
       >
         <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Ingredient Scanner</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
-          Upload an image of product ingredients to get personalized health insights
+          Upload an image of product ingredients to get personalized health insights.<span className="text-amber-400 font-bold"> Note that our system can make mistakes sometime as it is still under development.</span>
         </p>
       </motion.div>
       <motion.div
@@ -714,7 +714,7 @@ const IngredientScanner = () => {
               <div className="flex flex-col items-center justify-center text-center py-12 text-gray-500 dark:text-gray-400">
                 <Camera size={40} className="mb-4 opacity-50" />
                 <p className="mb-2">No analysis results yet</p>
-                <p className="text-sm">Upload an image and analyze to see personalized insights</p>
+                <p className="text-sm">Upload an image and analyze to see personalized insights.</p>
               </div>
             )}
           </div>
