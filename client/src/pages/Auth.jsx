@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Auth = ({ login }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -82,7 +83,7 @@ const Auth = ({ login }) => {
         login(); // Call the login function passed as a prop
       } else {
         // Switch to login mode after successful signup
-        alert("Signup successful! Please log in.");
+        toast.success("Signup successful! Please log in.");
         setIsLogin(true);
         setFormData({
           name: '',
@@ -97,7 +98,7 @@ const Auth = ({ login }) => {
       }
     } catch (error) {
       console.error(`Error during ${isLogin ? 'login' : 'signup'}:`, error.message);
-      alert(error.message);
+      toast.error(error.message);
     }
   };
 

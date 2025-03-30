@@ -160,32 +160,37 @@ const extractStructuredInfo = (text) => {
 //   return response.choices[0].message.content;
 // };
 
-const analyzeWithGroq = async (extractedData, userMedicalHistory) => {
+const analyzeWithGroq = async (extractedData, userMedicalHistory, processedText) => {
   const prompt = `
     You are an AI nutrition and health expert. Analyze the given extracted food data in relation to the user's medical history and return only a valid JSON object.  
     DO NOT include explanations, introductions, or any text outside JSON format.  
 
-    **User Medical History:**  
+    *User Medical History:*  
     ${JSON.stringify(userMedicalHistory)}
 
-    **Extracted Food Data:**  
+    *Extracted Food Data:*  
     ${JSON.stringify(extractedData)}
 
-    **Instructions:**  
-    - Evaluate ingredient safety based on health concerns and categorize each as **"safe"**, **"caution"**, **"danger"**, or **"info"**.
-    - If an ingredient is risky due to the user’s allergies, add a **"warning"** field.
-    - Provide **nutritional comments** based on \`nutrition_info\` (e.g., high sugar, sodium, fat).
-    - Determine an **overall rating**:
-      - \`"Safe"\` → If all ingredients are safe.
-      - \`"Caution"\` → If some ingredients raise concerns.
-      - \`"Danger"\` → If any ingredient is highly unsafe.
-    - Assign **overallColor** based on \`overallRating\`:
-      - \`"Safe"\` → \`"text-green-500 dark:text-green-400"\`
-      - \`"Caution"\` → \`"text-yellow-500 dark:text-yellow-400"\`
-      - \`"Danger"\` → \`"text-red-500 dark:text-red-400"\`
+    *Nutrition Information:*
+    ${JSON.stringify(processedText.nutrition_info)}
 
-    **Output Format (Strict JSON)**:  
-    \`\`\`json
+    *Instructions:*  
+    - Evaluate ingredient safety based on health concerns and categorize each as *"safe", **"caution", **"danger", or **"info"*.
+    - For EVERY ingredient, provide a detailed "description" that explains what the ingredient is, its purpose in food, and its potential health effects.
+    - If an ingredient is risky due to the user's allergies, add a *"warning"* field.
+    - Provide *nutritional comments* based on \nutrition_info\ (e.g., high sugar, sodium, fat).
+    - Determine an *overall rating*:
+      - \"Safe"\ → If all ingredients are safe.
+      - \"Caution"\ → If some ingredients raise concerns.
+      - \"Danger"\ → If any ingredient is highly unsafe.
+    - Assign *overallColor* based on \overallRating\:
+      - \"Safe"\ → \"text-green-500 dark:text-green-400"\
+      - \"Caution"\ → \"text-yellow-500 dark:text-yellow-400"\
+      - \"Danger"\ → \"text-red-500 dark:text-red-400"\
+    - Include the complete nutrition_info in your response.
+
+    *Output Format (Strict JSON)*:  
+    \\\`json
     {
       "overallRating": "Caution",
       "overallColor": "text-yellow-500 dark:text-yellow-400",
@@ -194,29 +199,106 @@ const analyzeWithGroq = async (extractedData, userMedicalHistory) => {
         {
           "name": "Refined Wheat Flour (Maida)",
           "safety": "caution",
-          "description": "Highly processed flour with minimal fiber and nutrients, may impact blood sugar levels."
+          "description": "Highly processed flour with minimal fiber and nutrients, may impact blood sugar levels. It is made by grinding wheat grains after removing the bran and germ, resulting in a fine, white flour that is commonly used in baked goods."
         },
         {
           "name": "Soy",
           "safety": "danger",
-          "description": "A common allergen that can cause severe reactions in sensitive individuals.",
+          "description": "A common allergen that can cause severe reactions in sensitive individuals. Soy is a legume that contains complete protein and is used as an emulsifier, protein filler, and flavor enhancer in many processed foods.",
           "warning": "You have a soy allergy listed in your profile."
         },
         {
           "name": "High Fructose Corn Syrup",
           "safety": "caution",
-          "description": "A sweetener that may contribute to weight gain and metabolic issues when consumed in excess."
+          "description": "A sweetener that may contribute to weight gain and metabolic issues when consumed in excess. It is made from corn starch and contains more fructose than regular corn syrup, which may metabolize differently in the body than other sugars."
         }
       ],
       "nutritionalComments": [
         "High in total fat and saturated fat, which may not be ideal for heart health.",
         "Contains added sugars above recommended daily intake.",
         "High sodium content, which may impact blood pressure."
-      ]
+      ],
+      "nutrition_info": {
+        "Energy": {
+          "unit": "kcal",
+          "per_100g": 250,
+          "per_serve": 125,
+          "rda_percentage": 10
+        },
+        "Total Fat": {
+          "unit": "g",
+          "per_100g": 15,
+          "per_serve": 7.5,
+          "rda_percentage": 20
+        },
+        "Saturated Fat": {
+          "unit": "g",
+          "per_100g": 5,
+          "per_serve": 2.5,
+          "rda_percentage": 25
+        },
+        "Trans Fat": {
+          "unit": "g",
+          "per_100g": 0.2,
+          "per_serve": 0.1,
+          "rda_percentage": null
+        },
+        "Cholesterol": {
+          "unit": "mg",
+          "per_100g": 30,
+          "per_serve": 15,
+          "rda_percentage": 10
+        },
+        "Sodium": {
+          "unit": "mg",
+          "per_100g": 500,
+          "per_serve": 250,
+          "rda_percentage": 22
+        },
+        "Carbohydrates": {
+          "unit": "g",
+          "per_100g": 50,
+          "per_serve": 25,
+          "rda_percentage": 18
+        },
+        "Sugars": {
+          "unit": "g",
+          "per_100g": 20,
+          "per_serve": 10,
+          "rda_percentage": 35
+        },
+        "Protein": {
+          "unit": "g",
+          "per_100g": 10,
+          "per_serve": 5,
+          "rda_percentage": 12
+        },
+        "Fiber": {
+          "unit": "g",
+          "per_100g": 3,
+          "per_serve": 1.5,
+          "rda_percentage": 10
+        },
+        "Calcium": {
+          "unit": "mg",
+          "per_100g": 120,
+          "per_serve": 60,
+          "rda_percentage": 15
+        },
+        "Iron": {
+          "unit": "mg",
+          "per_100g": 2.5,
+          "per_serve": 1.2,
+          "rda_percentage": 18
+        }
+      }
     }
-    \`\`\`
+    \\\`
 
-    Return only the JSON object above. Do not include any additional text.  
+    IMPORTANT: 
+    1. EVERY ingredient MUST have a detailed description explaining what it is and its effects, regardless of safety level.
+    2. Include the complete nutrition_info from the provided data.
+    3. Return only the JSON object above. Do not include any additional text.  
   `;
 
   const response = await groq.chat.completions.create({
@@ -227,16 +309,22 @@ const analyzeWithGroq = async (extractedData, userMedicalHistory) => {
   try {
     // Extract the JSON part of the response
     const jsonString = response.choices[0].message.content.trim();
-    return JSON.parse(jsonString);
+    const parsedResponse = JSON.parse(jsonString);
+    
+    // If nutrition_info wasn't included in the AI response, add it directly from processedText
+    if (!parsedResponse.nutrition_info && processedText && processedText.nutrition_info) {
+      parsedResponse.nutrition_info = processedText.nutrition_info;
+    }
+    
+    return parsedResponse;
   } catch (error) {
     console.error("Failed to parse Groq response:", error, "Response:", response.choices[0].message.content);
-    return { error: "Invalid AI response format" };
+    return { 
+      error: "Invalid AI response format",
+      nutrition_info: processedText ? processedText.nutrition_info : {}
+    };
   }
 };
-
-
-
-
 
 // Function to handle image upload and analysis
 
@@ -268,7 +356,7 @@ exports.uploadImage = async (req, res) => {
       const processedText = extractStructuredInfo(extractedText);
 
       //------------Step 3: Send data to Groq AI Model for analysis-------------
-      const groqResponse = await analyzeWithGroq(extractedText, userMedicalHistory);
+      const groqResponse = await analyzeWithGroq(extractedText, userMedicalHistory,processedText);
 
       res.status(200).json({
         // message: "Analysis completed.",
