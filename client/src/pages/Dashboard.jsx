@@ -19,8 +19,21 @@ const AUTH_HEADERS = {
 
 // API Service Module
 const apiService = {
+  // getUserProfile: async () => {
+  //   return axios.get(`${BACKEND_URL}/api/user/me`, AUTH_HEADERS);
+  // },
   getUserProfile: async () => {
-    return axios.get(`${BACKEND_URL}/api/user/me`, AUTH_HEADERS);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+    return axios.get(`${BACKEND_URL}/api/user/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      withCredentials: true,
+    });
   },
   updateBasicInfo: async (data) => {
     return axios.patch(`${BACKEND_URL}/api/user/update-basic`, data, AUTH_HEADERS);
