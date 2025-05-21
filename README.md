@@ -13,7 +13,12 @@ HealthScan is an AI-powered health companion designed to analyze product ingredi
 ### AI Medical Chatbot – Your Personalized Health Guide  
 - Get context-aware medical advice based on your health records, prescriptions, and allergies.  
 - Receive emergency awareness alerts if symptoms indicate a serious condition.  
-- Ask medical questions about symptoms, medications, or first-aid procedures.  
+- Ask medical questions about symptoms, medications, or first-aid procedures.
+
+## System Architecture
+![Screenshot 2025-04-01 at 6 51 15 PM](https://github.com/user-attachments/assets/cd6e750e-c135-415c-8ebe-f55dd1e30979)
+
+
 
 ## Tech Stack  
 - **Frontend:** React, Framer Motion  
