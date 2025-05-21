@@ -8,6 +8,6 @@ const multer = require("multer");
 const router = express.Router();
 
 // router.post("/", authMiddleware, upload.single("image"), uploadImage);
-router.post("/", authMiddleware, uploadImage)
+router.post("/", uploadImage)
 
 module.exports = router;
