@@ -302,7 +302,9 @@ const analyzeWithGroq = async (extractedData, userMedicalHistory, processedText)
     IMPORTANT: 
     1. EVERY ingredient MUST have a detailed description explaining what it is and its effects, regardless of safety level.
     2. Include the complete nutrition_info from the provided data.
-    3. Return only the JSON object above. Do not include any additional text.  
+    3. Return only the JSON object above. Do not include any additional text.
+    4. Return only a valid JSON object, with no extra text, headers, or descriptions STRICTLY.
+
   `;
 
   const response = await groq.chat.completions.create({
@@ -353,6 +355,7 @@ exports.uploadImage = async (req, res) => {
       };
 
       // Step 1: Use Google Vision API for OCR on the uploaded image
+      
       const [result] = await client.textDetection(req.file.buffer);
       //extracted data from image
       const extractedText = result.textAnnotations.length ? result.textAnnotations[0].description : "No text found";
