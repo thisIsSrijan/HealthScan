@@ -4,6 +4,6 @@
 # Ignore node modules
 node_modules/
 
-ingredient-scanner-ocr-service.json
+ingredient-scanner-ocr-service.json 
 
 package-lock.json
