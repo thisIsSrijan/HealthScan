@@ -137,7 +137,7 @@ const IngredientScanner = () => {
       const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/upload`, {
         method: "POST",
          headers: {
-            "Content-Type": "multipart/form-data",
+            // "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         credentials: "include",
